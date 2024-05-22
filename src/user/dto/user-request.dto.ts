@@ -1,4 +1,4 @@
-export class StoreUserRequestDto {
+export class UserRequestDto {
   public email: string;
 
   public deviceId: string;

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { LoginRequestDto } from './dto/login-request.dto';
-import { StoreUserRequestDto } from './dto/store-user-request.dto';
+import { UserRequestDto } from './dto/user-request.dto';
 
 @Controller('user')
 export class UserController {
@@ -13,7 +13,7 @@ export class UserController {
   }
 
   @Post('/storeUserInfo')
-  public async storeUserInfo(@Body() body: StoreUserRequestDto) {
+  public async storeUserInfo(@Body() body: UserRequestDto) {
     return await this.userService.storeUserInformation(body);
   }
 }

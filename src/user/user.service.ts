@@ -3,7 +3,7 @@ import { LoginRequestDto } from './dto/login-request.dto';
 import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { StoreUserRequestDto } from './dto/store-user-request.dto';
+import { UserRequestDto } from './dto/user-request.dto';
 
 @Injectable()
 export class UserService {
@@ -66,7 +66,7 @@ export class UserService {
       'infotech',
     );
 
-    const responseData: StoreUserRequestDto = {
+    const responseData: UserRequestDto = {
       token: response.IToken,
       email: data.email,
       imei: data.imei,
@@ -87,7 +87,7 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async getUserInformationFromDb(email: string): Promise<StoreUserRequestDto | null> {
+  public async getUserInformationFromDb(email: string): Promise<UserRequestDto | null> {
     const userData = this.prismaService.user.findUnique({
       where: {
         email,
@@ -119,10 +119,10 @@ export class UserService {
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user information if successful.
    */
   public async storeUserInformation(
-    data: StoreUserRequestDto,
+    data: UserRequestDto,
   ): Promise<object> {
     try {
-      const storeData: StoreUserRequestDto = {
+      const storeData: UserRequestDto = {
         email: data.email,
         imei: data.imei,
         customerId: data.customerId,
@@ -134,7 +134,7 @@ export class UserService {
         companyId: data.companyId,
         infotechUserId: data.infotechUserId,
       };
-      const userInformation: StoreUserRequestDto =
+      const userInformation: UserRequestDto =
         await this.prismaService.user.upsert({
           where: { email: data.email },
           update: {
