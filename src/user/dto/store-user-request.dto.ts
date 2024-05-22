@@ -10,4 +10,6 @@ export class StoreUserRequestDto {
   public customerId: string;
 
   public idNumber: string;
+
+  public userGroupId: number;
 }

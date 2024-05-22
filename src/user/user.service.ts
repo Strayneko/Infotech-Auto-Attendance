@@ -74,6 +74,7 @@ export class UserService {
         token: data.token,
         idNumber: data.idNumber,
         deviceId: data.deviceId,
+        userGroupId: data.userGroupId,
       };
 
       const userInformation: StoreUserRequestDto =
