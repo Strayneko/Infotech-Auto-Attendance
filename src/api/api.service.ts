@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EncryptionService } from '../encryption/encryption.service';
 
 @Injectable()
 export class ApiService {
   private readonly attendanceApiBaseUrl: string;
   private readonly infotechApiBaseUrl: string;
   private readonly logger: Logger;
+  private readonly encryptionService: EncryptionService;
 
   public constructor() {
     this.attendanceApiBaseUrl = process.env.ATTENDANCE_API_BASE_URL;
     this.infotechApiBaseUrl = process.env.INFOTECH_API_BASE_URL;
     this.logger = new Logger(ApiService.name);
+    this.encryptionService = new EncryptionService();
   }
 
   /**
@@ -27,12 +30,16 @@ export class ApiService {
   ): Promise<object | null> {
     try {
       const baseUrl = this.getApiBaseUrl(type);
+      const headers: HeadersInit = await this.getHeaders();
+      const body = JSON.stringify({
+        str: encryptedData,
+      });
       const response = await fetch(`${baseUrl}/${path}`, {
         method: 'POST',
-        body: JSON.stringify({
-          str: encryptedData,
-        }),
+        headers,
+        body,
       });
+
       return response.json();
     } catch (e) {
       const message: string = `Can't fetch api for ${path}. Reason: ${e.message}`;
@@ -51,5 +58,28 @@ export class ApiService {
     return type.toLowerCase() === 'infotech'
       ? this.infotechApiBaseUrl
       : this.attendanceApiBaseUrl;
+  }
+
+  /**
+   * Generates and returns a set of HTTP headers for API requests.
+   * This function constructs headers required for making API calls, including encrypted values
+   * @returns {Promise<HeadersInit>} - A promise that resolves to an object representing the HTTP headers.
+   */
+  public async getHeaders(): Promise<HeadersInit> {
+    const itoken: string = '';
+    const isnew: string = await this.encryptionService.encrypt('true');
+    const mobile: string = await this.encryptionService.encrypt('Mobile');
+    const userEmail: string = await this.encryptionService.encrypt('');
+    const imei: string = await this.encryptionService.encrypt('');
+    return {
+      'User-Agent': 'okhttp/4.12.0',
+      'Content-Type': 'application/json; charset=UTF-8',
+      itoken,
+      isnew,
+      '20y16e': mobile,
+      '9p1d4r': userEmail,
+      '4v9d': imei,
+      isverified: isnew,
+    };
   }
 }
