@@ -14,13 +14,39 @@ datasource db {
 }
 
 model User {
-  id         Int      @default(autoincrement()) @id
-  email      String   @unique
-  token      String?
-  imei       String?
-  deviceId   String?
-  customerId String
-  idNumber   String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             Int              @id @default(autoincrement())
+  userGroup      UserGroup?       @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
+  userGroupId    Int?
+  email          String           @unique
+  token          String?
+  imei           String?
+  deviceId       String?
+  customerId     String
+  idNumber       String
+  attendanceData AttendanceData[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model UserGroup {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  User      User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttendanceData {
+  id           Int      @id @default(autoincrement())
+  User         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int?
+  locationName String
+  latitude     String
+  longitude    String
+  remarks      String?
+  timeZone     String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
