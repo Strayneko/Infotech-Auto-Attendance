@@ -67,6 +67,15 @@ export class UserService {
     data: StoreUserRequestDto,
   ): Promise<object> {
     try {
+      const storeData: StoreUserRequestDto = {
+        email: data.email,
+        imei: data.imei,
+        customerId: data.customerId,
+        token: data.token,
+        idNumber: data.idNumber,
+        deviceId: data.deviceId,
+      };
+
       const userInformation: StoreUserRequestDto =
         await this.prismaService.user.upsert({
           where: { email: data.email },
@@ -74,7 +83,7 @@ export class UserService {
             token: data.token,
             deviceId: data.deviceId,
           },
-          create: data,
+          create: storeData,
         });
 
       return {
