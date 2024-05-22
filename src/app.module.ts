@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './task/task.module';
 import { ApiModule } from './api/api.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ApiModule } from './api/api.module';
     ScheduleModule.forRoot(),
     TaskModule,
     ApiModule,
+    AttendanceModule,
   ],
   controllers: [],
   providers: [],
