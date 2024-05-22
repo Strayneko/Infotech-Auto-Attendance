@@ -18,11 +18,14 @@ model User {
   userGroup      UserGroup?       @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
   userGroupId    Int?
   email          String           @unique
-  token          String?
-  imei           String?
-  deviceId       String?
+  token          String
+  imei           String
+  deviceId       String
   customerId     String
   idNumber       String
+  employeeId     String
+  infotechUserId Int
+  companyId      Int
   attendanceData AttendanceData[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
