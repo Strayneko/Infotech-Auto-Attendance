@@ -11,5 +11,5 @@ export class StoreUserRequestDto {
 
   public idNumber: string;
 
-  public userGroupId: number;
+  public userGroupId?: number;
 }

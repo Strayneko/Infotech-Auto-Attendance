@@ -76,7 +76,6 @@ export class UserService {
         deviceId: data.deviceId,
         userGroupId: data.userGroupId,
       };
-
       const userInformation: StoreUserRequestDto =
         await this.prismaService.user.upsert({
           where: { email: data.email },
