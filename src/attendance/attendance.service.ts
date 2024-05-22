@@ -21,9 +21,13 @@ export class AttendanceService {
    * and error scenarios, returning an appropriate response object in either case.
    *
    * @param {GetAttendanceHistoryRequestDto} data - The request data transfer object containing employeeId, customerId, and companyId.
+   * @param {boolean} fetchLastItem - Option to retrieve just the last item
    * @returns {Promise<{status: boolean, message: string, data?: any}>} - A promise that resolves to an object containing the status, message, and data (if any).
    */
-  public async getAttendanceHistory(data: GetAttendanceHistoryRequestDto) {
+  public async getAttendanceHistory(
+    data: GetAttendanceHistoryRequestDto,
+    fetchLastItem: boolean = false,
+  ): Promise<object> {
     try {
       const payload = {
         EmpCode: data.employeeId,
@@ -46,10 +50,12 @@ export class AttendanceService {
         };
       }
 
+      let responseData = historyData;
+      if (fetchLastItem) responseData = historyData.pop();
       return {
         status: true,
         message: '',
-        data: historyData,
+        data: responseData,
       };
     } catch (e) {
       const message: string = `Can't fetch attendance history from infotech. Reason: ${e.message}`;
