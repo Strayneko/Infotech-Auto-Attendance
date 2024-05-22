@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UserRequestDto } from './dto/user-request.dto';
+import { LoginRequestDto } from './dto/login-request.dto';
 import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -23,7 +23,7 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async getUserInformation(data: UserRequestDto): Promise<object> {
+  public async getUserInformation(data: LoginRequestDto): Promise<object> {
     try {
       const dbUserData = await this.getUserInformationFromDb(data.email);
       if (dbUserData !== null) {
@@ -57,7 +57,7 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async fetchUserInformationFromInfotech(data: UserRequestDto): Promise<object> {
+  public async fetchUserInformationFromInfotech(data: LoginRequestDto): Promise<object> {
     const jsonData: string = JSON.stringify(data);
     const encryptedData = await this.encryptionService.encrypt(jsonData);
     const response: any = await this.apiService.fetchApi(

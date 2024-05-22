@@ -1,4 +1,4 @@
-export class UserRequestDto {
+export class LoginRequestDto {
   public imei?: string;
 
   public email: string;
