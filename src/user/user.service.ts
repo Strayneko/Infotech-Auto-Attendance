@@ -18,33 +18,27 @@ export class UserService {
   }
 
   /**
-   * Retrieves user information from infotech api server.
+   * Retrieves user information from infotech api server or database.
    *
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
   public async getUserInformation(data: UserRequestDto): Promise<object> {
     try {
-      const jsonData: string = JSON.stringify(data);
-      const encryptedData = await this.encryptionService.encrypt(jsonData);
-      const response: any = await this.apiService.fetchApi(
-        'user/getUserInfo',
-        encryptedData,
-        'infotech',
-      );
+      const dbUserData = await this.getUserInformationFromDb(data.email);
+      if (dbUserData !== null) {
+        return {
+          status: true,
+          message: '',
+          data: dbUserData,
+        };
+      }
 
-      const responseData: StoreUserRequestDto = {
-        token: response.IToken,
-        email: data.email,
-        imei: data.imei,
-        customerId: response.UserAuthorization.Customer.CustomerId,
-        idNumber: response.IDNumber,
-      };
-
+      const infotechData = await this.fetchUserInformationFromInfotech(data);
       return {
         status: true,
         message: '',
-        data: responseData,
+        data: infotechData,
       };
     } catch (e) {
       const message: string = `Can't fetch user information from infotech. Reason: ${e.message}`;
@@ -55,6 +49,67 @@ export class UserService {
         message,
       };
     }
+  }
+
+  /**
+   * Retrieves user information from infotech api server.
+   *
+   * @param data - The data object containing user request information.
+   * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
+   */
+  public async fetchUserInformationFromInfotech(data: UserRequestDto): Promise<object> {
+    const jsonData: string = JSON.stringify(data);
+    const encryptedData = await this.encryptionService.encrypt(jsonData);
+    const response: any = await this.apiService.fetchApi(
+      'Login',
+      encryptedData,
+      'infotech',
+    );
+
+    const responseData: StoreUserRequestDto = {
+      token: response.IToken,
+      email: data.email,
+      imei: data.imei,
+      deviceId: data.imei,
+      customerId: response.UserAuthorization.Customer.CustomerId,
+      idNumber: response.IDNumber,
+      employeeId: response.UserAuthorization.EmpCode,
+      companyId: response.UserAuthorization.CompanyId,
+      infotechUserId: response.UserAuthorization.UserId,
+    };
+
+    return responseData;
+  }
+
+  /**
+   * Retrieves user information from database.
+   *
+   * @param data - The data object containing user request information.
+   * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
+   */
+  public async getUserInformationFromDb(email: string): Promise<StoreUserRequestDto | null> {
+    const userData = this.prismaService.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: false,
+        userGroupId: true,
+        email: true,
+        token: true,
+        imei: true,
+        deviceId: true,
+        customerId: true,
+        idNumber: true,
+        employeeId: true,
+        infotechUserId: true,
+        companyId: true,
+        createdAt: false,
+        updatedAt: false,
+      },
+    });
+    if (!userData) return null;
+    return userData;
   }
 
   /**
@@ -73,8 +128,11 @@ export class UserService {
         customerId: data.customerId,
         token: data.token,
         idNumber: data.idNumber,
-        deviceId: data.deviceId,
+        deviceId: data.imei,
         userGroupId: data.userGroupId,
+        employeeId: data.employeeId,
+        companyId: data.companyId,
+        infotechUserId: data.infotechUserId,
       };
       const userInformation: StoreUserRequestDto =
         await this.prismaService.user.upsert({
