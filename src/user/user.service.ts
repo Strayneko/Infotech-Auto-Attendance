@@ -34,7 +34,14 @@ export class UserService {
         };
       }
 
-      const infotechData = await this.fetchUserInformationFromInfotech(data);
+      const payload = {
+        IMEINo: data.imei,
+        plaintext: '',
+        UserEmail: data.email,
+        UserPassword: data.password,
+      };
+
+      const infotechData = await this.fetchUserInformationFromInfotech(payload);
       return {
         status: true,
         message: '',
@@ -57,8 +64,8 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async fetchUserInformationFromInfotech(data: LoginRequestDto): Promise<object> {
-    const jsonData: string = JSON.stringify(data);
+  public async fetchUserInformationFromInfotech(payload): Promise<object> {
+    const jsonData: string = JSON.stringify(payload);
     const encryptedData = await this.encryptionService.encrypt(jsonData);
     const response: any = await this.apiService.fetchApi(
       'Login',
@@ -68,9 +75,9 @@ export class UserService {
 
     const responseData: UserRequestDto = {
       token: response.IToken,
-      email: data.email,
-      imei: data.imei,
-      deviceId: data.imei,
+      email: payload.UserEmail,
+      imei: payload.IMEINo,
+      deviceId: payload.IMEINo,
       customerId: response.UserAuthorization.Customer.CustomerId,
       idNumber: response.IDNumber,
       employeeId: response.UserAuthorization.EmpCode,
