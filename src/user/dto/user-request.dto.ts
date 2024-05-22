@@ -1,9 +1,9 @@
 export class UserRequestDto {
-  public imei: string;
+  public imei?: string;
 
   public email: string;
 
-  public plainText: string;
+  public plainText?: string;
 
-  public password: string;
+  public password?: string;
 }
