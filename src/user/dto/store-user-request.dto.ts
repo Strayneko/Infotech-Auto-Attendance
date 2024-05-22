@@ -1,7 +1,7 @@
 export class StoreUserRequestDto {
   public email: string;
 
-  public deviceId?: string;
+  public deviceId: string;
 
   public imei: string;
 
@@ -12,4 +12,10 @@ export class StoreUserRequestDto {
   public idNumber: string;
 
   public userGroupId?: number;
+
+  public employeeId: string;
+
+  public companyId: number;
+
+  public infotechUserId: number;
 }
