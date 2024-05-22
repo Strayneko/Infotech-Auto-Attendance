@@ -71,6 +71,7 @@ export class UserService {
       'Login',
       encryptedData,
       'infotech',
+      false,
     );
 
     const responseData: UserRequestDto = {
