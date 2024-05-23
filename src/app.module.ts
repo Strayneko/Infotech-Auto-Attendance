@@ -6,6 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './task/task.module';
 import { ApiModule } from './api/api.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -16,6 +17,9 @@ import { AttendanceModule } from './attendance/attendance.module';
     TaskModule,
     ApiModule,
     AttendanceModule,
+    EventEmitterModule.forRoot({
+      delimiter: ':',
+    }),
   ],
   controllers: [],
   providers: [],
