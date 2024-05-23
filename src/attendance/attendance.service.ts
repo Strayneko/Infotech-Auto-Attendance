@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { UserInfoCreatedEvent } from '../user/events/user-info-created-event';
+import { AttendanceDataRequestDto } from './dto/attendance-data-request.dto';
 
 @Injectable()
 export class AttendanceService {
@@ -10,6 +14,7 @@ export class AttendanceService {
   public constructor(
     protected readonly encryptionService: EncryptionService,
     protected readonly apiService: ApiService,
+    protected readonly prismaService: PrismaService,
   ) {}
 
   /**
@@ -64,6 +69,42 @@ export class AttendanceService {
         status: false,
         message,
       };
+    }
+  }
+
+  /**
+   * Handles the 'userInfo:created' event and stores required data for clock-in.
+   *
+   * @param {UserInfoCreatedEvent} event - The event payload containing user attendance data.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} - Throws an error if the attendance data cannot be stored.
+   *
+   */
+  @OnEvent('userInfo:created')
+  public async storeDataRequiredForClockIn(
+    event: UserInfoCreatedEvent,
+  ): Promise<void> {
+    try {
+      const data: AttendanceDataRequestDto = {
+        userId: event.attendanceData.userId,
+        locationName: event.attendanceData.locationName,
+        latitude: event.attendanceData.latitude,
+        longitude: event.attendanceData.longitude,
+        isActive: event.attendanceData.isActive,
+        remarks: event.attendanceData.remarks || '',
+        timeZone: event.attendanceData.timeZone,
+      };
+      await this.prismaService.attendanceData.upsert({
+        where: { userId: event.attendanceData.userId },
+        update: data,
+        create: {
+          userId: event.attendanceData.userId,
+          ...data,
+        },
+      });
+    } catch (e) {
+      this.logger.error(`Cannot store attendance data. Reason: ${e.message}`);
     }
   }
 
