@@ -4,6 +4,8 @@ import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRequestDto } from './dto/user-request.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UserInfoCreatedEvent } from './events/user-info-created-event';
 
 @Injectable()
 export class UserService {
@@ -13,6 +15,7 @@ export class UserService {
     protected readonly apiService: ApiService,
     protected readonly encryptionService: EncryptionService,
     protected readonly prismaService: PrismaService,
+    protected readonly eventEmitter: EventEmitter2,
   ) {
     this.logger = new Logger(UserService.name);
   }
@@ -95,7 +98,9 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async getUserInformationFromDb(email: string): Promise<UserRequestDto | null> {
+  public async getUserInformationFromDb(
+    email: string,
+  ): Promise<UserRequestDto | null> {
     const userData = this.prismaService.user.findUnique({
       where: {
         email,
@@ -126,36 +131,51 @@ export class UserService {
    * @param data - The data object containing user information to store.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user information if successful.
    */
-  public async storeUserInformation(
-    data: UserRequestDto,
-  ): Promise<object> {
+  public async storeUserInformation(data: UserRequestDto): Promise<object> {
     try {
-      const storeData: UserRequestDto = {
-        email: data.email,
-        imei: data.imei,
-        customerId: data.customerId,
-        token: data.token,
-        idNumber: data.idNumber,
-        deviceId: data.imei,
-        userGroupId: data.userGroupId,
-        employeeId: data.employeeId,
-        companyId: data.companyId,
-        infotechUserId: data.infotechUserId,
-      };
-      const userInformation: UserRequestDto =
-        await this.prismaService.user.upsert({
-          where: { email: data.email },
-          update: {
-            token: data.token,
-            deviceId: data.deviceId,
-          },
-          create: storeData,
-        });
+      const userInformation = await this.prismaService.$transaction(
+        async (prisma) => {
+          const userInformation: UserRequestDto = await prisma.user.upsert({
+            where: { email: data.email },
+            update: {
+              token: data.token,
+              deviceId: data.deviceId,
+            },
+            create: {
+              email: data.email,
+              imei: data.imei,
+              customerId: data.customerId,
+              token: data.token,
+              idNumber: data.idNumber,
+              deviceId: data.imei,
+              userGroupId: data.userGroupId,
+              employeeId: data.employeeId,
+              companyId: data.companyId,
+              infotechUserId: data.infotechUserId,
+            },
+          });
+          const userInfoCreatedEvent = new UserInfoCreatedEvent();
+          userInfoCreatedEvent.attendanceData = {
+            userId: userInformation.id,
+            locationName: data.attendanceData.locationName,
+            latitude: data.attendanceData.latitude,
+            longitude: data.attendanceData.longitude,
+            isActive: data.attendanceData.isActive,
+            remarks: data.attendanceData.remarks,
+            timeZone: data.attendanceData.timeZone,
+          };
+          this.eventEmitter.emit('userInfo:created', userInfoCreatedEvent);
 
+          return {
+            ...userInformation,
+            ...userInfoCreatedEvent,
+          };
+        },
+      );
       return {
         status: true,
         message: '',
-        userInformation,
+        data: userInformation,
       };
     } catch (e) {
       const message: string = `Failed to store user information. Reason: ${e.message}`;
