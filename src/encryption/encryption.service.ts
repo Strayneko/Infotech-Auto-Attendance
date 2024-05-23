@@ -22,7 +22,7 @@ export class EncryptionService {
    * and returns null.
    *
    * @param {string} data - The base64-encoded string to be decrypted.
-   * @returns {Promise<string | null>} - A promise that resolves to the decrypted string if successful, or null if an error occurs.
+   * @returns {string | null} - the decrypted data
    *
    * @throws Will log an error message if decryption fails.
    *
@@ -32,7 +32,7 @@ export class EncryptionService {
    * const decryptedData = await service.decrypt(encryptedData);
    * console.log(decryptedData); // Outputs the decrypted string if successful, or null if there was an error.
    */
-  public async decrypt(data: string): Promise<string | null> {
+  public decryptSync(data: string): string | null {
     try {
       const decode = CryptoJS.enc.Base64.parse(data);
       const ivParameterSpec = CryptoJS.enc.Utf8.parse(this.initVectorKey);
@@ -86,5 +86,13 @@ export class EncryptionService {
       this.logger.error(e.message);
       return null;
     }
+  }
+
+  /**
+   * Decrypt data asynchronously
+   * @return {Promise<string | null>}
+   */
+  public async decrypt(data: string): Promise<string | null> {
+    return this.decryptSync(data);
   }
 }
