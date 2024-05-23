@@ -108,5 +108,31 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Get attendance data required for clock in
+   */
+  public async getAttendanceRequiredData() {
+    try {
+      const data = await this.prismaService.attendanceData.findMany({
+        where: { isActive: true },
+      });
+
+      return {
+        status: true,
+        message: '',
+        data,
+      };
+    } catch (e) {
+      const message: string = `Can't get attendance data. Reason: ${e.message}`;
+      this.logger.error(message);
+
+      return {
+        status: false,
+        message,
+        data: null,
+      };
+    }
+  }
+
   public async attendanceClockIn() {}
 }
