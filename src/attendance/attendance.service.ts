@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserInfoCreatedEvent } from '../user/events/user-info-created-event';
 import { AttendanceDataRequestDto } from './dto/attendance-data-request.dto';
+import { UserRequestDto } from '../user/dto/user-request.dto';
+import { ApiConfig } from '../api/api.config';
 
 @Injectable()
 export class AttendanceService {
@@ -15,6 +17,7 @@ export class AttendanceService {
     protected readonly encryptionService: EncryptionService,
     protected readonly apiService: ApiService,
     protected readonly prismaService: PrismaService,
+    protected readonly apiConfig: ApiConfig,
   ) {}
 
   /**
@@ -44,7 +47,7 @@ export class AttendanceService {
         await this.encryptionService.encrypt(payloadJson);
 
       const historyData: any = await this.apiService.fetchApi(
-        'AttendanceHistory/GetAttendanceHistory',
+        this.apiConfig.getAttendanceHistoryPath,
         encryptedPayload,
         'attendance',
       );
@@ -113,8 +116,12 @@ export class AttendanceService {
    */
   public async getAttendanceRequiredData() {
     try {
-      const data = await this.prismaService.attendanceData.findMany({
-        where: { isActive: true },
+      const data = await this.prismaService.user.findMany({
+        include: {
+          attendanceData: {
+            where: { isActive: true },
+          },
+        },
       });
 
       return {
@@ -134,5 +141,42 @@ export class AttendanceService {
     }
   }
 
-  public async attendanceClockIn() {}
+  /**
+   * This method will send clock in request to infotech attendance server
+   */
+  public async attendanceClockIn(data: UserRequestDto) {
+    const payload = {
+      CardNoC: data.idNumber,
+      CustomerID: data.customerId,
+      Deviceid: data.deviceId,
+      IMEINo: data.imei,
+      LatN: data.attendanceData.latitude,
+      LngN: data.attendanceData.longitude,
+      LocationNameC: data.attendanceData.locationName,
+      remarks: data.attendanceData.remarks,
+      timeZoneName: data.attendanceData.timeZone,
+      IsException: false,
+      language: 'english',
+      PunchAction: 'IN',
+      JobCode: '',
+      NRICNo: '',
+      Temperature: '',
+      VerifyType: '',
+      WIFISSID: '',
+    };
+
+    const jsonPayload = JSON.stringify(payload);
+    const encryptedPayload = await this.encryptionService.encrypt(jsonPayload);
+
+    try {
+      await this.apiService.fetchApi(
+        this.apiConfig.clockinPath,
+        encryptedPayload,
+        'attendance',
+        true,
+      );
+    } catch (e) {
+      this.logger.error(`Cannot clock in. Reason: ${e.message}`);
+    }
+  }
 }
