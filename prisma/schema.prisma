@@ -43,7 +43,7 @@ model UserGroup {
 model AttendanceData {
   id           Int      @id @default(autoincrement())
   User         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       Int?
+  userId       Int?     @unique
   locationName String
   latitude     String
   longitude    String
