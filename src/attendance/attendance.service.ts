@@ -144,7 +144,8 @@ export class AttendanceService {
   /**
    * This method will send clock in request to infotech attendance server
    */
-  public async attendanceClockIn(data: UserRequestDto) {
+  @OnEvent('autoClockIn:dispatch')
+  public async attendanceClockIn(data) {
     const payload = {
       CardNoC: data.idNumber,
       CustomerID: data.customerId,
