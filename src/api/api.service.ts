@@ -1,18 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EncryptionService } from '../encryption/encryption.service';
+import { ApiConfig } from './api.config';
 
 @Injectable()
 export class ApiService {
-  private readonly attendanceApiBaseUrl: string;
-  private readonly infotechApiBaseUrl: string;
   private readonly logger: Logger;
   private readonly encryptionService: EncryptionService;
+  private readonly apiConfig: ApiConfig;
 
   public constructor() {
-    this.attendanceApiBaseUrl = process.env.ATTENDANCE_API_BASE_URL;
-    this.infotechApiBaseUrl = process.env.INFOTECH_API_BASE_URL;
     this.logger = new Logger(ApiService.name);
     this.encryptionService = new EncryptionService();
+    this.apiConfig = new ApiConfig();
   }
 
   /**
@@ -21,6 +20,7 @@ export class ApiService {
    * @param {string} path - The endpoint path.
    * @param {string} encryptedData - The encrypted data to be sent to the API.
    * @param {string} type - The type of API (default: 'infotech').
+   * @param {boolean} withToken
    * @returns {Promise<object | null>} A Promise resolving to the response data from the API endpoint, or null if an error occurs.
    */
   public async fetchApi(
@@ -57,8 +57,8 @@ export class ApiService {
    */
   public getApiBaseUrl(type: string = 'infotech') {
     return type.toLowerCase() === 'infotech'
-      ? this.infotechApiBaseUrl
-      : this.attendanceApiBaseUrl;
+      ? this.apiConfig.infotechApiBaseUrl
+      : this.apiConfig.attendanceApiBaseUrl;
   }
 
   /**

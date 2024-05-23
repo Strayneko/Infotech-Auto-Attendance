@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UserRequestDto } from './dto/user-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserInfoCreatedEvent } from './events/user-info-created-event';
+import { ApiConfig } from '../api/api.config';
 
 @Injectable()
 export class UserService {
@@ -16,6 +17,7 @@ export class UserService {
     protected readonly encryptionService: EncryptionService,
     protected readonly prismaService: PrismaService,
     protected readonly eventEmitter: EventEmitter2,
+    protected readonly apiConfig: ApiConfig,
   ) {
     this.logger = new Logger(UserService.name);
   }
@@ -71,7 +73,7 @@ export class UserService {
     const jsonData: string = JSON.stringify(payload);
     const encryptedData = await this.encryptionService.encrypt(jsonData);
     const response: any = await this.apiService.fetchApi(
-      'Login',
+      this.apiConfig.getUserInfoPath,
       encryptedData,
       'infotech',
       false,
