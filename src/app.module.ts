@@ -10,6 +10,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@nestql/bull-board';
 import { BullQueueModule } from './bull-queue/bull-queue.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { BullQueueModule } from './bull-queue/bull-queue.module';
     }),
     BullBoardModule.register(),
     BullQueueModule,
+    CacheModule.register({ isGlobal: true }),
   ],
   controllers: [],
   providers: [],

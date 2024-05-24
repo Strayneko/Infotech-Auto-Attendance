@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
@@ -7,6 +7,10 @@ import { UserRequestDto } from './dto/user-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserInfoCreatedEvent } from './events/user-info-created-event';
 import { ApiConfig } from '../api/api.config';
+import * as Imei from 'node-imei';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { Constants } from '../constants';
 
 @Injectable()
 export class UserService {
@@ -18,6 +22,7 @@ export class UserService {
     protected readonly prismaService: PrismaService,
     protected readonly eventEmitter: EventEmitter2,
     protected readonly apiConfig: ApiConfig,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.logger = new Logger(UserService.name);
   }
@@ -30,7 +35,10 @@ export class UserService {
    */
   public async getUserInformation(data: LoginRequestDto): Promise<object> {
     try {
-      const dbUserData = await this.getUserInformationFromDb(data.email);
+      const dbUserData = await this.getUserInformationFromDb(
+        data.email,
+        data.employeeId.toUpperCase(),
+      );
       if (dbUserData !== null) {
         return {
           status: true,
@@ -39,14 +47,17 @@ export class UserService {
         };
       }
 
+      const imei = new Imei().random();
       const payload = {
-        IMEINo: data.imei,
+        IMEINo: imei,
         plaintext: '',
         UserEmail: data.email,
         UserPassword: data.password,
       };
 
-      const infotechData = await this.fetchUserInformationFromInfotech(payload);
+      const infotechData: any =
+        await this.fetchUserInformationFromInfotech(payload);
+      if (infotechData === null) throw new Error('Credentials might be wrong.');
       return {
         status: true,
         message: '',
@@ -69,7 +80,12 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async fetchUserInformationFromInfotech(payload): Promise<object> {
+  public async fetchUserInformationFromInfotech(
+    payload,
+  ): Promise<object | null> {
+    const cachedUserData: any = await this.cacheManager.get(payload.UserEmail);
+    if (cachedUserData) return cachedUserData;
+
     const jsonData: string = JSON.stringify(payload);
     const encryptedData = await this.encryptionService.encrypt(jsonData);
     const response: any = await this.apiService.fetchApi(
@@ -77,8 +93,13 @@ export class UserService {
       encryptedData,
       'infotech',
       false,
+      {
+        email: payload.UserEmail,
+        imei: payload.imei,
+      },
     );
 
+    if (response.UserId == 0) return null;
     const responseData: UserRequestDto = {
       token: response.IToken,
       email: payload.UserEmail,
@@ -91,6 +112,11 @@ export class UserService {
       infotechUserId: response.UserAuthorization.UserId,
     };
 
+    await this.cacheManager.set(
+      payload.UserEmail,
+      responseData,
+      Constants.ONE_HOURS,
+    );
     return responseData;
   }
 
@@ -102,10 +128,15 @@ export class UserService {
    */
   public async getUserInformationFromDb(
     email: string,
+    employeeId: string,
   ): Promise<UserRequestDto | null> {
-    const userData = this.prismaService.user.findUnique({
+    const cachedUserData: any = await this.cacheManager.get(email);
+    if (cachedUserData) return cachedUserData;
+
+    const userData = await this.prismaService.user.findUnique({
       where: {
         email,
+        employeeId,
       },
       select: {
         id: false,
@@ -124,6 +155,7 @@ export class UserService {
       },
     });
     if (!userData) return null;
+    await this.cacheManager.set(email, userData, Constants.TWENTY_FOUR_HOURS);
     return userData;
   }
 
@@ -167,7 +199,11 @@ export class UserService {
             timeZone: data.attendanceData.timeZone,
           };
           this.eventEmitter.emit('userInfo:created', userInfoCreatedEvent);
-
+          await this.cacheManager.set(
+            data.email,
+            userInformation,
+            Constants.ONE_HOURS,
+          );
           return {
             ...userInformation,
             ...userInfoCreatedEvent,
