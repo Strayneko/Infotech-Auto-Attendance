@@ -3,7 +3,7 @@ export class LoginRequestDto {
 
   public email: string;
 
-  public plainText?: string;
-
   public password?: string;
+
+  public employeeId?: string;
 }

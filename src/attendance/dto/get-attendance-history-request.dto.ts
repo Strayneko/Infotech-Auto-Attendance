@@ -4,4 +4,6 @@ export class GetAttendanceHistoryRequestDto {
   public customerId: number;
 
   public companyId: number;
+
+  public email: string;
 }
