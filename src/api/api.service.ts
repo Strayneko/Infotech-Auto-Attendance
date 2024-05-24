@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiConfig } from './api.config';
+import { ExtraHeadersTypes } from './types/extra-headers';
 
 @Injectable()
 export class ApiService {
@@ -28,10 +29,14 @@ export class ApiService {
     encryptedData: string,
     type: string = 'infotech',
     withToken: boolean = true,
+    extraHeadersData: any = {},
   ): Promise<object | null> {
     try {
       const baseUrl = this.getApiBaseUrl(type);
-      const headers: HeadersInit = await this.getHeaders(withToken);
+      const headers: HeadersInit = await this.getHeaders(
+        withToken,
+        extraHeadersData,
+      );
       const body = JSON.stringify({
         str: encryptedData,
       });
@@ -67,23 +72,35 @@ export class ApiService {
    * @param {boolean} withToken
    * @returns {Promise<HeadersInit>} - A promise that resolves to an object representing the HTTP headers.
    */
-  public async getHeaders(withToken: boolean): Promise<HeadersInit> {
-    const itoken: string = '';
+  public async getHeaders(
+    withToken: boolean,
+    extraHeadersData: ExtraHeadersTypes = {},
+  ): Promise<HeadersInit> {
     const encryptedTrue: string = await this.encryptionService.encrypt('true');
     const mobile: string = await this.encryptionService.encrypt('Mobile');
-    const userEmail: string = await this.encryptionService.encrypt('');
-    const imei: string = await this.encryptionService.encrypt('');
-    const headers: HeadersInit = {
+    const userEmail: string = await this.encryptionService.encrypt(
+      extraHeadersData.email,
+    );
+    const imei: string = await this.encryptionService.encrypt(
+      extraHeadersData.imei,
+    );
+    let headers: HeadersInit = {
       'User-Agent': 'okhttp/4.12.0',
       'Content-Type': 'application/json; charset=UTF-8',
-      isnew: encryptedTrue,
+      isverified: encryptedTrue,
       '20y16e': mobile,
       '9p1d4r': userEmail,
       '4v9d': imei,
-      isverified: encryptedTrue,
     };
 
-    if (withToken) headers.itoken = itoken;
+    if (withToken) {
+      const itoken: string = extraHeadersData.token;
+      headers = {
+        ...headers,
+        isnew: encryptedTrue,
+        itoken,
+      };
+    }
     return headers;
   }
 }
