@@ -1,14 +1,12 @@
 {
+  "buildCommand": "npm run build",
+  "installCommand": "npm i --force --legacy-peer-deps",
+  "regions": ["sin1"],
  "version": 2,
   "builds": [
     {
       "src": "./dist/main.js",
-      "use": "@vercel/node",
-      "config": {
-        "buildCommand": "npm run build",
-        "installCommand": "npm i --force --legacy-peer-deps",
-        "regions": ["sin1"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
