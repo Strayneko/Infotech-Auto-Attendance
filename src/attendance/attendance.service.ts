@@ -3,14 +3,12 @@ import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-req
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { OnEvent } from '@nestjs/event-emitter';
-import { UserInfoCreatedEvent } from '../user/events/user-info-created-event';
 import { AttendanceDataRequestDto } from './dto/attendance-data-request.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { OnEvent } from '@nestjs/event-emitter';
 
 import { ApiConfig } from '../api/api.config';
-import { UserService } from '../user/user.service';
 import { Constants } from '../constants';
 import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
@@ -23,7 +21,6 @@ export class AttendanceService {
     private readonly encryptionService: EncryptionService,
     private readonly apiService: ApiService,
     private readonly prismaService: PrismaService,
-    private readonly userService: UserService,
     private readonly apiConfig: ApiConfig,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -56,15 +53,6 @@ export class AttendanceService {
           data: cachedHistory,
         };
       }
-
-      const userData = await this.userService.getUserInformationFromDb(
-        data.email,
-        data.employeeId,
-      );
-      if (!userData) {
-        throw new Error('User info not found in database.');
-      }
-
       const payload = {
         EmpCode: data.employeeId,
         CustomerID: data.customerId,
@@ -81,8 +69,8 @@ export class AttendanceService {
         true,
         {
           email: data.email,
-          token: userData.token,
-          imei: userData.imei,
+          token: data.token,
+          imei: data.imei,
         },
       );
       if (!historyData && historyData.data.length === 0) {
@@ -115,44 +103,40 @@ export class AttendanceService {
   }
 
   /**
-   * Handles the 'userInfo:created' event and stores required data for clock-in.
+   * Handles & stores required data for clock-in.
    *
-   * @param {UserInfoCreatedEvent} event - The event payload containing user attendance data.
-   * @returns {Promise<void>}
+   * @param {UserInfoCreatedEvent} attendanceData - The event payload containing user attendance data.
+   * @returns {Promise<object | void>}
    *
    * @throws {Error} - Throws an error if the attendance data cannot be stored.
    *
    */
-  @OnEvent('userInfo:created')
   public async storeDataRequiredForClockIn(
-    event: UserInfoCreatedEvent,
-  ): Promise<void> {
+    attendanceData: AttendanceDataRequestDto,
+  ): Promise<object | null> {
     try {
       const data: AttendanceDataRequestDto = {
-        userId: event.attendanceData.userId,
-        locationName: event.attendanceData.locationName,
-        latitude: event.attendanceData.latitude,
-        longitude: event.attendanceData.longitude,
-        isActive: event.attendanceData.isActive,
-        remarks: event.attendanceData.remarks || '',
-        timeZone: event.attendanceData.timeZone,
+        locationName: attendanceData.locationName,
+        latitude: attendanceData.latitude,
+        longitude: attendanceData.longitude,
+        isActive: attendanceData.isActive,
+        remarks: attendanceData.remarks || '',
+        timeZone: attendanceData.timeZone,
       };
-      await this.prismaService.attendanceData.upsert({
-        where: { userId: event.attendanceData.userId },
+      const create = await this.prismaService.attendanceData.upsert({
+        where: { userId: attendanceData.userId },
         update: data,
         create: {
-          userId: event.attendanceData.userId,
+          userId: attendanceData.userId,
           ...data,
         },
       });
 
       await this.cacheManager.del('attendances-data');
+      return create;
     } catch (e) {
-      // rollback user data
-      await this.prismaService.user.delete({
-        where: { id: event.attendanceData.userId },
-      });
       this.logger.error(`Cannot store attendance data. Reason: ${e.message}`);
+      return null;
     }
   }
 
@@ -172,7 +156,7 @@ export class AttendanceService {
       const data = await this.prismaService.user.findMany({
         include: {
           attendanceData: {
-            where: { isActive: true },
+            where: { isActive: 1 },
           },
         },
       });
@@ -241,7 +225,11 @@ export class AttendanceService {
         },
       );
 
+      const date = new Date();
       await this.cacheManager.del(`history-${data.email}`);
+      this.logger.log(
+        `Clock In Success at: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
+      );
     } catch (e) {
       this.logger.error(`Cannot clock in. Reason: ${e.message}`);
     }

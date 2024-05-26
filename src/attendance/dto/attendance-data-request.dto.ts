@@ -11,5 +11,5 @@ export class AttendanceDataRequestDto {
 
   public timeZone: string;
 
-  public isActive: boolean;
+  public isActive: number;
 }

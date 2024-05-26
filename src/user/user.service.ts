@@ -4,13 +4,12 @@ import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRequestDto } from './dto/user-request.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UserInfoCreatedEvent } from './events/user-info-created-event';
 import { ApiConfig } from '../api/api.config';
 import * as NodeImei from 'node-imei';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Constants } from '../constants';
+import { AttendanceService } from '../attendance/attendance.service';
 
 @Injectable()
 export class UserService {
@@ -20,8 +19,8 @@ export class UserService {
     protected readonly apiService: ApiService,
     protected readonly encryptionService: EncryptionService,
     protected readonly prismaService: PrismaService,
-    protected readonly eventEmitter: EventEmitter2,
     protected readonly apiConfig: ApiConfig,
+    protected readonly attendanceService: AttendanceService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.logger = new Logger(UserService.name);
@@ -35,11 +34,17 @@ export class UserService {
    */
   public async getUserInformation(data: LoginRequestDto): Promise<object> {
     try {
-      const dbUserData = await this.getUserInformationFromDb(
-        data.email,
-        data.employeeId.toUpperCase(),
-      );
-      if (dbUserData !== null) {
+      let dbUserData;
+      if (data.employeeId) {
+        dbUserData = await this.getUserInformationFromDb(
+          data.email,
+          data.employeeId.toUpperCase(),
+        );
+      }
+      if (data.employeeId && dbUserData === null) {
+        throw new Error('User not found in our db.');
+      }
+      if (data.employeeId && dbUserData !== null) {
         return {
           status: true,
           message: '',
@@ -131,9 +136,6 @@ export class UserService {
     email: string,
     employeeId: string,
   ): Promise<UserRequestDto | null> {
-    const cachedUserData: any = await this.cacheManager.get(email);
-    if (cachedUserData) return cachedUserData;
-
     const userData = await this.prismaService.user.findUnique({
       where: {
         email,
@@ -156,7 +158,6 @@ export class UserService {
       },
     });
     if (!userData) return null;
-    await this.cacheManager.set(email, userData, Constants.TWENTY_FOUR_HOURS);
     return userData;
   }
 
@@ -189,32 +190,32 @@ export class UserService {
               infotechUserId: data.infotechUserId,
             },
           });
-          const userInfoCreatedEvent = new UserInfoCreatedEvent();
-          userInfoCreatedEvent.attendanceData = {
-            userId: userInformation.id,
-            locationName: data.attendanceData.locationName,
-            latitude: data.attendanceData.latitude,
-            longitude: data.attendanceData.longitude,
-            isActive: data.attendanceData.isActive,
-            remarks: data.attendanceData.remarks,
-            timeZone: data.attendanceData.timeZone,
-          };
-          this.eventEmitter.emit('userInfo:created', userInfoCreatedEvent);
-          await this.cacheManager.set(
-            data.email,
-            userInformation,
-            Constants.ONE_HOURS,
-          );
-          return {
-            ...userInformation,
-            ...userInfoCreatedEvent,
-          };
+
+          return userInformation;
         },
+      );
+
+      const createAttendanceData: any =
+        await this.attendanceService.storeDataRequiredForClockIn({
+          userId: userInformation.id,
+          locationName: data.attendanceData.locationName,
+          latitude: data.attendanceData.latitude,
+          longitude: data.attendanceData.longitude,
+          isActive: data.attendanceData.isActive,
+          remarks: data.attendanceData.remarks,
+          timeZone: data.attendanceData.timeZone,
+        });
+      if (createAttendanceData === null)
+        throw new Error('Failed to store attendance data.');
+      await this.cacheManager.set(
+        data.email,
+        userInformation,
+        Constants.ONE_HOURS,
       );
       return {
         status: true,
         message: '',
-        data: userInformation,
+        data: { ...userInformation, attendanceData: createAttendanceData },
       };
     } catch (e) {
       const message: string = `Failed to store user information. Reason: ${e.message}`;

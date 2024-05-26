@@ -49,7 +49,7 @@ model AttendanceData {
   longitude    String
   remarks      String?
   timeZone     String
-  isActive     Boolean  @default(true)
+  isActive     Int      @default(1) @db.SmallInt()
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
