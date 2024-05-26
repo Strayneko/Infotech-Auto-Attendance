@@ -8,7 +8,6 @@ import { ApiModule } from './api/api.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bull';
-import { BullBoardModule } from '@nestql/bull-board';
 import { BullQueueModule } from './bull-queue/bull-queue.module';
 import { CacheModule } from '@nestjs/cache-manager';
 
@@ -31,7 +30,6 @@ import { CacheModule } from '@nestjs/cache-manager';
         port: +process.env.REDIS_PORT || 6379,
       },
     }),
-    BullBoardModule.register(),
     BullQueueModule,
     CacheModule.register({ isGlobal: true }),
   ],

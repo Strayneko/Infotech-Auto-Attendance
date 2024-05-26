@@ -29,7 +29,6 @@
     "@nestjs/event-emitter": "^2.0.4",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.2",
-    "@nestql/bull-board": "^1.0.3",
     "@prisma/client": "^5.14.0",
     "bull": "^4.12.8",
     "cache-manager": "^5.5.3",
@@ -40,6 +39,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@nestql/bull-board": "^1.0.3",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^4.17.17",
