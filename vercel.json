@@ -1,11 +1,19 @@
 {
- "regions": ["sin1"],
-  "buildCommand": "npm run build",
-  "installCommand": "npm i --force --legacy-peer-deps",
-  "outputDirectory": "./dist",
-  "routes": [{
-    "src": "./(.*)",
-    "dest": "dist/main.js",
-    "methods": ["POST", "GET", "PUT", "PATCH"]
-  }]
+ "version": 2,
+  "builds": [
+    {
+      "src": "./",
+      "use": "@vercel/node",
+      "config": {
+        "build": "npm run build",
+        "install": "npm i"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/main.js"
+    }
+  ]
 }
