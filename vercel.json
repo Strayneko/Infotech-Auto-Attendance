@@ -9,6 +9,10 @@
       "use": "@vercel/node"
     }
   ],
+  "commands": {
+    "install": "yarn install",
+    "build": "yarn build"
+  },
   "routes": [
     {
       "src": "/(.*)",
