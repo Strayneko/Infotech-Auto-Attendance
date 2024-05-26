@@ -20,10 +20,19 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/bull": "^10.1.1",
+    "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/event-emitter": "^2.0.4",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^4.0.2",
+    "@nestql/bull-board": "^1.0.3",
     "@prisma/client": "^5.14.0",
+    "bull": "^4.12.8",
+    "cache-manager": "^5.5.3",
+    "crypto-js": "^4.2.0",
+    "node-imei": "^1.0.8",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
@@ -67,5 +76,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
