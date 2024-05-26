@@ -148,6 +148,10 @@ export class AttendanceService {
 
       await this.cacheManager.del('attendances-data');
     } catch (e) {
+      // rollback user data
+      await this.prismaService.user.delete({
+        where: { id: event.attendanceData.userId },
+      });
       this.logger.error(`Cannot store attendance data. Reason: ${e.message}`);
     }
   }
