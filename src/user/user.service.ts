@@ -7,7 +7,7 @@ import { UserRequestDto } from './dto/user-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserInfoCreatedEvent } from './events/user-info-created-event';
 import { ApiConfig } from '../api/api.config';
-import * as Imei from 'node-imei';
+import * as NodeImei from 'node-imei';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Constants } from '../constants';
@@ -47,7 +47,8 @@ export class UserService {
         };
       }
 
-      const imei = new Imei().random();
+      const imeiGenerator = new NodeImei();
+      const imei = imeiGenerator.random();
       const payload = {
         IMEINo: imei,
         plaintext: '',

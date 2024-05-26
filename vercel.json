@@ -2,18 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/main.ts",
+      "src": "dist/main.js",
       "use": "@vercel/node",
       "config": {
-        "regions": ["sin1"],
-        "buildCommand": "npm run build"
+        "distDir": "dist"
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/src/main.ts"
-    }
-  ]
+  "routes": [{
+    "src": "/(.*)",
+    "dest": "dist/main.js"
+  }]
 }
