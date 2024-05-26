@@ -47,7 +47,8 @@ export class UserService {
         };
       }
 
-      const imei = new Imei().random();
+      const imeiGenerator = new Imei();
+      const imei = imeiGenerator.random();
       const payload = {
         IMEINo: imei,
         plaintext: '',
