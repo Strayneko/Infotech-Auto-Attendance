@@ -34,10 +34,10 @@
     "crypto-js": "^4.2.0",
     "node-imei": "^1.0.8",
     "reflect-metadata": "^0.2.0",
+    "@nestjs/cli": "^10.3.2",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^4.17.17",
@@ -78,6 +78,7 @@
     "testEnvironment": "node"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node ./src/prisma/seed.ts",
+    "schema": "./src/prisma/schema.prisma"
   }
 }
