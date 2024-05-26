@@ -30,7 +30,7 @@ export class TaskService {
       await this.attendanceService.getAttendanceRequiredData();
 
     for (const attendance of attendances.data) {
-      // await this.bullQueueService.dispatchAutoClockInQueue(attendance);
+      await this.bullQueueService.dispatchAutoClockInQueue(attendance);
     }
   }
 }
