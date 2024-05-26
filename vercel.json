@@ -1,6 +1,7 @@
 {
   "buildCommand": "yarn build:vercel",
   "installCommand": "yarn",
+  "outputDirectory": "dist",
   "routes": [
     {
       "src": "/(.*)",
