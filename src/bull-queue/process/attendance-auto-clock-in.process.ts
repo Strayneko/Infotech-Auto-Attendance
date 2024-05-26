@@ -9,6 +9,6 @@ export class AttendanceAutoClockInProcess {
   @Process('auto-clock-in')
   public handleAttendanceClockIn(job: Job) {
     console.log('job processed');
-    // this.eventEmitter.emit('autoClockIn:dispatch', job.data);
+    this.eventEmitter.emit('autoClockIn:dispatch', job.data);
   }
 }
