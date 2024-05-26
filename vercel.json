@@ -1,22 +1,18 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm i --force --legacy-peer-deps",
-  "regions": ["sin1"],
- "version": 2,
-  "builds": [
-    {
-      "src": "./dist/main.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "commands": {
-    "install": "yarn install",
-    "build": "yarn build"
-  },
+  "buildCommand": "yarn build:vercel",
+  "installCommand": "yarn",
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "dist/main.js"
+      "dest": "dist/main.js",
+      "methods": ["POST", "GET", "PATCH", "PUT"]
+    }
+  ],
+  "regions": ["sin1"],
+  "builds": [
+    {
+      "src": "dist/main.js",
+      "use": "@vercel/node"
     }
   ]
 }
