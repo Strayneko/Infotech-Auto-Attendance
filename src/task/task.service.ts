@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { AttendanceService } from '../attendance/attendance.service';
 import { BullQueueService } from '../bull-queue/bull-queue.service';
 
@@ -12,16 +12,25 @@ export class TaskService {
     private readonly bullQueueService: BullQueueService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
-  public async handleCron() {
+  // called monday - friday every 8:25 am asia/jakarta
+  @Cron('0 25 8 * * 1-5')
+  public async handleClockInCron() {
+    this.logger.log('tes');
+    // await this.dispatchClockInOrClockOutJob();
+  }
+
+  // called monday - friday every 5:30 pm asia/jakarta
+  @Cron('0 30 17 * * 1-5')
+  public async handleClockOutCron() {
+    await this.dispatchClockInOrClockOutJob();
+  }
+
+  private async dispatchClockInOrClockOutJob(): Promise<void> {
     const attendances =
       await this.attendanceService.getAttendanceRequiredData();
 
-    console.log('scheduler called');
     for (const attendance of attendances.data) {
-      await this.bullQueueService.dispatchAutoClockInQueue(attendance);
+      // await this.bullQueueService.dispatchAutoClockInQueue(attendance);
     }
-
-    this.logger.debug('Called every 30 seconds');
   }
 }
