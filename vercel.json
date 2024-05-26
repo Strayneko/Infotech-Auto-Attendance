@@ -6,7 +6,7 @@
       "use": "@vercel/node",
       "config": {
         "build": "npm run build",
-        "install": "npm i"
+        "install": "npm i --force --legacy-peer-deps"
       }
     }
   ],
