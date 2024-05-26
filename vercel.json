@@ -5,8 +5,9 @@
       "src": "./dist/main.js",
       "use": "@vercel/node",
       "config": {
-        "build": "npm run build",
-        "install": "npm i --force --legacy-peer-deps"
+        "buildCommand": "npm run build",
+        "installCommand": "npm i --force --legacy-peer-deps",
+        "regions": ["sin1"]
       }
     }
   ],
