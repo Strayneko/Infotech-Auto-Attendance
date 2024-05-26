@@ -8,11 +8,5 @@
       "methods": ["POST", "GET", "PATCH", "PUT"]
     }
   ],
-  "regions": ["sin1"],
-  "builds": [
-    {
-      "src": "dist/main.js",
-      "use": "@vercel/node"
-    }
-  ]
+  "regions": ["sin1"]
 }
