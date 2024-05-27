@@ -1,19 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiConfig } from './api.config';
 import { ExtraHeadersTypes } from './types/extra-headers';
+import { MyLoggerService } from '../my-logger/my-logger.service';
 
 @Injectable()
 export class ApiService {
-  private readonly logger: Logger;
-  private readonly encryptionService: EncryptionService;
-  private readonly apiConfig: ApiConfig;
-
-  public constructor() {
-    this.logger = new Logger(ApiService.name);
-    this.encryptionService = new EncryptionService();
-    this.apiConfig = new ApiConfig();
-  }
+  public constructor(
+    private readonly logger: MyLoggerService,
+    private readonly encryptionService: EncryptionService,
+    private apiConfig: ApiConfig,
+  ) {}
 
   /**
    * Fetches data from an API endpoint.
