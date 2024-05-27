@@ -12,11 +12,11 @@
   "crons": [
     {
     "path": "/api/cron/in",
-    "schedule": "*/10 * * * *"
+    "schedule": "0 55 17 * 1-5"
   },
     {
       "path": "/api/cron/out",
-      "schedule": "* 30 15 * * 1-5"
+      "schedule": "0 30 10 * * 1-5"
     }
   ],
   "routes": [{
