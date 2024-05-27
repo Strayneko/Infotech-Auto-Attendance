@@ -4,6 +4,8 @@ import { Controller, Get } from '@nestjs/common';
 export class AppController {
   @Get('/')
   public async index() {
-    return { message: 'Hello' };
+    const date = new Date();
+    const serverTime = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+    return { serverTime };
   }
 }

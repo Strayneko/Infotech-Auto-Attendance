@@ -14,10 +14,10 @@ datasource db {
 }
 
 model User {
-  id             Int              @id @default(autoincrement())
-  userGroup      UserGroup?       @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
+  id             Int             @id @default(autoincrement())
+  userGroup      UserGroup?      @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
   userGroupId    Int?
-  email          String           @unique
+  email          String          @unique
   token          String
   imei           String
   deviceId       String
@@ -26,9 +26,9 @@ model User {
   employeeId     String
   infotechUserId Int
   companyId      Int
-  attendanceData AttendanceData[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  attendanceData AttendanceData?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model UserGroup {
