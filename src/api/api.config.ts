@@ -8,11 +8,8 @@ export class ApiConfig {
   public readonly getAttendanceHistoryPath: string;
   public readonly clockinPath: string;
   public readonly getUserInfoPath: string;
-  private readonly encryptionService: EncryptionService;
 
-  public constructor() {
-    this.encryptionService = new EncryptionService();
-
+  public constructor(private encryptionService: EncryptionService) {
     const attendanceApiBaseUrl = process.env.ATTENDANCE_API_BASE_URL || '';
     const infotechApiBaseUrl = process.env.INFOTECH_API_BASE_URL || '';
     const clockinPath = process.env.CLOCK_IN_PATH || '';

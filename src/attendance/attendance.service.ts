@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
@@ -12,16 +12,16 @@ import { ApiConfig } from '../api/api.config';
 import { Constants } from '../constants';
 import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
+import { MyLoggerService } from '../my-logger/my-logger.service';
 
 @Injectable()
 export class AttendanceService {
-  private readonly logger: Logger = new Logger(AttendanceService.name);
-
   public constructor(
     private readonly encryptionService: EncryptionService,
     private readonly apiService: ApiService,
     private readonly prismaService: PrismaService,
     private readonly apiConfig: ApiConfig,
+    private readonly logger: MyLoggerService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 

@@ -1,12 +1,14 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Logger } from '@nestjs/common';
+import { MyLoggerService } from '../../my-logger/my-logger.service';
 
 @Processor('ATTENDANCE_CLOCK_IN')
 export class AttendanceAutoClockInProcess {
-  private logger: Logger = new Logger(AttendanceAutoClockInProcess.name);
-  public constructor(private readonly eventEmitter: EventEmitter2) {}
+  public constructor(
+    private readonly eventEmitter: EventEmitter2,
+    private readonly logger: MyLoggerService,
+  ) {}
 
   @Process('auto-clock-in')
   public handleAttendanceClockIn(job: Job) {
