@@ -228,10 +228,10 @@ export class AttendanceService {
       const date = new Date();
       await this.cacheManager.del(`history-${data.email}`);
       this.logger.log(
-        `Clock In Success at: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
+        `${data.type} Success at: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
       );
     } catch (e) {
-      this.logger.error(`Cannot clock in. Reason: ${e.message}`);
+      this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
     }
   }
 }

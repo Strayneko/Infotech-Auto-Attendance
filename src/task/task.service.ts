@@ -13,24 +13,28 @@ export class TaskService {
   ) {}
 
   // called monday - friday every 8:25 am asia/jakarta
-  @Cron('0 25 8 * * 1-5')
+  @Cron('0 25 1 * * 1-5')
   public async handleClockInCron() {
     this.logger.log('tes');
-    // await this.dispatchClockInOrClockOutJob();
+    await this.dispatchClockInOrClockOutJob('Clock In');
   }
 
   // called monday - friday every 5:30 pm asia/jakarta
-  @Cron('0 30 17 * * 1-5')
+  @Cron('* 30 10 * * 1-5')
   public async handleClockOutCron() {
-    await this.dispatchClockInOrClockOutJob();
+    this.logger.log('Starting clocking out process');
+    await this.dispatchClockInOrClockOutJob('Clock Out');
   }
 
-  private async dispatchClockInOrClockOutJob(): Promise<void> {
+  private async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances =
       await this.attendanceService.getAttendanceRequiredData();
 
     for (const attendance of attendances.data) {
-      await this.bullQueueService.dispatchAutoClockInQueue(attendance);
+      await this.bullQueueService.dispatchAutoClockInQueue({
+        ...attendance,
+        type,
+      });
     }
   }
 }
