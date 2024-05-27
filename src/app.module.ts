@@ -11,6 +11,7 @@ import { BullModule } from '@nestjs/bull';
 import { BullQueueModule } from './bull-queue/bull-queue.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
+import { LoggerModule } from 'nestjs-rollbar';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { AppController } from './app.controller';
     }),
     BullQueueModule,
     CacheModule.register({ isGlobal: true }),
+    LoggerModule.forRoot({
+      accessToken: process.env.ROLLBAR_TOKEN,
+      environment: process.env.NODE_ENV,
+    }),
   ],
   controllers: [AppController],
   providers: [],
