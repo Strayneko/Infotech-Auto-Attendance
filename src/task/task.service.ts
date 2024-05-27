@@ -13,7 +13,7 @@ export class TaskService {
   ) {}
 
   // called monday - friday every 8:25 am asia/jakarta
-  @Cron('0 25 1 * * 1-5')
+  @Cron('0 2 2 * * 1-5')
   public async handleClockInCron() {
     this.logger.log('tes');
     // await this.dispatchClockInOrClockOutJob();
