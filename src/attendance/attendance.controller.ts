@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query, Res } from '@nestjs/common';
+import { Body, Controller, Post, Query, Res, Get, Param } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { Response } from 'express';
@@ -22,5 +22,12 @@ export class AttendanceController {
     let httpCode: number = 200;
     if (history.status === false) httpCode = 400;
     return res.status(httpCode).json(history);
+  }
+
+  @Get('cron/:type')
+  public async handleCron(@Param('type') type: string) {
+    const clockType = type == 'in' ? 'Clock In' : 'Clock Out';
+    await this.attendanceService.dispatchClockInOrClockOutJob(clockType);
+    return { status: true };
   }
 }

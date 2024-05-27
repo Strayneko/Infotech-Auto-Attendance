@@ -9,6 +9,16 @@
       }
     }
   ],
+  "crons": [
+    {
+    "path": "/api/cron/in",
+    "schedule": "*/10 * * * *"
+  },
+    {
+      "path": "/api/cron/out",
+      "schedule": "* 30 15 * * 1-5"
+    }
+  ],
   "routes": [{
     "src": "/(.*)",
     "dest": "dist/main.js"
