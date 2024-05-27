@@ -24,4 +24,6 @@ export class UserRequestDto {
   public infotechUserId: number;
 
   public attendanceData?: AttendanceDataRequestDto;
+
+  public type?: 'Clock In' | 'Clock Out';
 }
