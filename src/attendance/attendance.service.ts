@@ -13,6 +13,7 @@ import { Constants } from '../constants';
 import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
 import { MyLoggerService } from '../my-logger/my-logger.service';
+import { BullQueueService } from '../bull-queue/bull-queue.service';
 
 @Injectable()
 export class AttendanceService {
@@ -22,6 +23,7 @@ export class AttendanceService {
     private readonly prismaService: PrismaService,
     private readonly apiConfig: ApiConfig,
     private readonly logger: MyLoggerService,
+    private readonly bullQueueService: BullQueueService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -232,6 +234,17 @@ export class AttendanceService {
       );
     } catch (e) {
       this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
+    }
+  }
+
+  public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
+    const attendances = await this.getAttendanceRequiredData();
+
+    for (const attendance of attendances.data) {
+      await this.bullQueueService.dispatchAutoClockInQueue({
+        ...attendance,
+        type,
+      });
     }
   }
 }
