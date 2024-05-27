@@ -12,7 +12,7 @@
   "crons": [
     {
     "path": "/api/attendance/cron/in",
-    "schedule": "10 18 * * 1-5"
+    "schedule": "20 1 * * 1-5"
   },
     {
       "path": "/api/attendance/cron/out",
