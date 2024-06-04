@@ -241,10 +241,17 @@ export class AttendanceService {
     const attendances = await this.getAttendanceRequiredData();
 
     for (const attendance of attendances.data) {
-      await this.bullQueueService.dispatchAutoClockInQueue({
-        ...attendance,
-        type,
-      });
+      // get random delay from 5 seconds to 10 minutes
+      const delay: number =
+        Math.floor(Math.random() * Constants.TEN_MINUTES) +
+        Constants.FIVE_SECONDS;
+      await this.bullQueueService.dispatchAutoClockInQueue(
+        {
+          ...attendance,
+          type,
+        },
+        { delay },
+      );
     }
   }
 }

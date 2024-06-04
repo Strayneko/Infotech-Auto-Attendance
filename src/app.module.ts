@@ -13,6 +13,15 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { LoggerModule } from 'nestjs-rollbar';
 
+const redis = process.env.REDIS_SOCK_PATH
+  ? {
+      path: process.env.REDIS_SOCK_PATH,
+    }
+  : {
+      password: process.env.REDIS_PASSWORD || '',
+      host: process.env.REDIS_HOST,
+      port: +process.env.REDIS_PORT || 6379,
+    };
 @Module({
   imports: [
     EncryptionModule,
@@ -26,11 +35,7 @@ import { LoggerModule } from 'nestjs-rollbar';
       delimiter: ':',
     }),
     BullModule.forRoot({
-      redis: {
-        password: process.env.REDIS_PASSWORD || '',
-        host: process.env.REDIS_HOST,
-        port: +process.env.REDIS_PORT || 6379,
-      },
+      redis,
     }),
     BullQueueModule,
     CacheModule.register({ isGlobal: true }),
