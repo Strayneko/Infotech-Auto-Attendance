@@ -22,6 +22,7 @@ const redis = process.env.REDIS_SOCK_PATH
       host: process.env.REDIS_HOST,
       port: +process.env.REDIS_PORT || 6379,
     };
+
 @Module({
   imports: [
     EncryptionModule,

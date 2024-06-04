@@ -1,4 +1,11 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Inject,
+  BadRequestException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { ApiService } from '../api/api.service';
 import { EncryptionService } from '../encryption/encryption.service';
@@ -35,16 +42,17 @@ export class UserService {
   public async getUserInformation(data: LoginRequestDto): Promise<object> {
     try {
       let dbUserData;
-      if (data.employeeId) {
+      if (data.type === 'login') {
         dbUserData = await this.getUserInformationFromDb(
           data.email,
           data.employeeId.toUpperCase(),
         );
+        console.log(dbUserData);
       }
-      if (data.employeeId && dbUserData === null) {
-        throw new Error('User not found in our db.');
+      if (data.type === 'login' && dbUserData === null) {
+        throw new BadRequestException('User not found in our db.');
       }
-      if (data.employeeId && dbUserData !== null) {
+      if (data.type === 'login' && dbUserData !== null) {
         return {
           status: true,
           message: '',
@@ -63,19 +71,24 @@ export class UserService {
 
       const infotechData: any =
         await this.fetchUserInformationFromInfotech(payload);
-      if (infotechData === null) throw new Error('Credentials might be wrong.');
+      if (infotechData === null)
+        throw new UnauthorizedException('Credentials might be wrong.');
       return {
         status: true,
         message: '',
         data: infotechData,
       };
     } catch (e) {
-      const message: string = `Can't fetch user information from infotech. Reason: ${e.message}`;
+      const message: string =
+        e.status === HttpStatus.BAD_REQUEST
+          ? e.message
+          : `Can't fetch user information from infotech. Reason: ${e.message}`;
       this.logger.error(message);
 
       return {
         status: false,
         message,
+        code: e.status,
       };
     }
   }
@@ -106,7 +119,7 @@ export class UserService {
     );
 
     if (response.UserId == 0) return null;
-    const responseData: UserRequestDto = {
+    const responseData = {
       token: response.IToken,
       email: payload.UserEmail,
       imei: payload.IMEINo,
@@ -135,7 +148,7 @@ export class UserService {
   public async getUserInformationFromDb(
     email: string,
     employeeId: string,
-  ): Promise<UserRequestDto | null> {
+  ): Promise<any | null> {
     const userData = await this.prismaService.user.findUnique({
       where: {
         email,
@@ -171,7 +184,7 @@ export class UserService {
     try {
       const userInformation = await this.prismaService.$transaction(
         async (prisma) => {
-          const userInformation: UserRequestDto = await prisma.user.upsert({
+          const userInformation = await prisma.user.upsert({
             where: { email: data.email },
             update: {
               token: data.token,
