@@ -167,7 +167,11 @@ export class UserService {
       },
     });
     if (!userData) return null;
-    await this.cacheManager.set(`user-${email}-${employeeId}`, userData);
+    await this.cacheManager.set(
+      `user-${email}-${employeeId}`,
+      userData,
+      Constants.ONE_HOURS,
+    );
     return userData;
   }
 
