@@ -3,7 +3,7 @@ name: Deploy to VPS
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   build_and_push:
@@ -23,4 +23,5 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
+            ls
             docker-compose up -d --build
