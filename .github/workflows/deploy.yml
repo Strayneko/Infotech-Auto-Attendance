@@ -24,6 +24,7 @@ jobs:
             cp ./Attendance-Exra-ENV/.env.prod .env
             ls
             git checkout main
+            git stash
             git status
             git pull
             docker-compose down
