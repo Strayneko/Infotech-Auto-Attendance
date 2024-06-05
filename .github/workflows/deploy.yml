@@ -22,6 +22,7 @@ jobs:
             cd app/Infotech-Auto-Attendance
             git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
             cp ./Attendance-Exra-ENV/.env.prod .env
+            rm -r Attendance-Extra-ENV
             ls
             git checkout main
             git stash
