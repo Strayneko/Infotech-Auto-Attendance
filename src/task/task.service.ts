@@ -11,14 +11,14 @@ export class TaskService {
   ) {}
 
   // called monday - friday every 8:25 am asia/jakarta
-  @Cron('0 10 8 * * 1-5')
+  @Cron('0 10 1 * * 1-5')
   public async handleClockInCron() {
     this.logger.log('Start clock in cron job');
     await this.attendanceService.dispatchClockInOrClockOutJob('Clock In');
   }
 
   // called monday - friday every 5:30 pm asia/jakarta
-  @Cron('0 31 17 * * 1-5')
+  @Cron('0 31 10 * * 1-5')
   public async handleClockOutCron() {
     this.logger.log('Start clock out cron job');
     await this.attendanceService.dispatchClockInOrClockOutJob('Clock Out');
