@@ -47,7 +47,6 @@ export class UserService {
           data.email,
           data.employeeId.toUpperCase(),
         );
-        console.log(dbUserData);
       }
       if (data.type === 'login' && dbUserData === null) {
         throw new BadRequestException('User not found in our db.');
@@ -102,9 +101,6 @@ export class UserService {
   public async fetchUserInformationFromInfotech(
     payload,
   ): Promise<object | null> {
-    const cachedUserData: any = await this.cacheManager.get(payload.UserEmail);
-    if (cachedUserData) return cachedUserData;
-
     const jsonData: string = JSON.stringify(payload);
     const encryptedData = await this.encryptionService.encrypt(jsonData);
     const response: any = await this.apiService.fetchApi(
@@ -131,11 +127,6 @@ export class UserService {
       infotechUserId: response.UserAuthorization.UserId,
     };
 
-    await this.cacheManager.set(
-      payload.UserEmail,
-      responseData,
-      Constants.ONE_HOURS,
-    );
     return responseData;
   }
 
@@ -149,6 +140,11 @@ export class UserService {
     email: string,
     employeeId: string,
   ): Promise<any | null> {
+    const cachedData = await this.cacheManager.get(
+      `user-${email}-${employeeId}`,
+    );
+    if (cachedData) return cachedData;
+
     const userData = await this.prismaService.user.findUnique({
       where: {
         email,
@@ -171,6 +167,7 @@ export class UserService {
       },
     });
     if (!userData) return null;
+    await this.cacheManager.set(`user-${email}-${employeeId}`, userData);
     return userData;
   }
 
