@@ -114,7 +114,8 @@ export class UserService {
       },
     );
 
-    if (response.UserId == 0) return null;
+    if (!response?.UserId) return null;
+    if (response && response.UserId == 0) return null;
     const responseData = {
       token: response.IToken,
       email: payload.UserEmail,
