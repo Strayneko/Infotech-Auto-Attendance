@@ -1,5 +1,5 @@
 import { AttendanceDataRequestDto } from '../../attendance/dto/attendance-data-request.dto';
-import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class UserRequestDto {
@@ -24,9 +24,10 @@ export class UserRequestDto {
   @IsNotEmpty()
   public idNumber: string;
 
-  @IsNotEmpty()
-  @Transform((param) => +param.value)
-  @IsNumber()
+  @IsNotEmpty({ message: 'User location is required.' })
+  @Transform((param) => (param.value ? +param.value : null))
+  @IsNumber({}, { message: 'User location should be number.' })
+  @IsIn([1, 2], { message: 'User location should be Indonesia or Malaysia.' })
   public userGroupId?: number;
 
   @IsNotEmpty()
