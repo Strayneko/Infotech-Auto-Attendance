@@ -1,4 +1,4 @@
-# Use the Node.js 20 base image
+# Use bun js image
 FROM oven/bun:1
 
 # Set the working directory inside the container
@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY . .
 COPY package*.json ./
 # Install dependencies
-RUN bun
+RUN bun install
 
 # Copy the rest of the application code
 
