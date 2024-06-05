@@ -1,0 +1,30 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd app/Infotech-Auto-Attendance
+            git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
+            cp ./Attendance-Exra-ENV/.env.prod .env
+            ls
+            git checkout main
+            git status
+            git pull
+            docker-compose down
+            docker-compose up -d --build

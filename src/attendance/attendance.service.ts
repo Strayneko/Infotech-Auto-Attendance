@@ -239,7 +239,6 @@ export class AttendanceService {
 
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
-
     for (const attendance of attendances.data) {
       // get random delay from 5 seconds to 10 minutes
       const delay: number =
