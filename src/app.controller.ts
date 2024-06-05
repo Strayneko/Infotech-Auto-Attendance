@@ -6,6 +6,6 @@ export class AppController {
   public async index() {
     const date = new Date();
     const serverTime = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
-    return { status: true, serverTime, message: 'Running' };
+    return { status: true, serverTime, env: process.env.NODE_ENV };
   }
 }
