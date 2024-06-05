@@ -1,16 +1,16 @@
 # Use the Node.js 20 base image
-FROM node:20-alpine
+FROM FROM oven/bun:1
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 
 # Copy package.json and package-lock.json
-COPY . .
 COPY package*.json ./
 # Install dependencies
 RUN yarn
 
 # Copy the rest of the application code
+COPY . .
 
 # Build the NestJS application
 RUN yarn build
@@ -19,4 +19,4 @@ RUN yarn build
 EXPOSE 3000
 
 # Command to run the application
-CMD ["npm", "run", "start:prod"]
+CMD ["yarn", "start:prod"]
