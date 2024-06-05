@@ -1,5 +1,5 @@
 import { AttendanceDataRequestDto } from '../../attendance/dto/attendance-data-request.dto';
-import { IsNotEmpty, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class UserRequestDto {
@@ -25,6 +25,8 @@ export class UserRequestDto {
   public idNumber: string;
 
   @IsNotEmpty()
+  @Transform((param) => +param.value)
+  @IsNumber()
   public userGroupId?: number;
 
   @IsNotEmpty()
