@@ -12,11 +12,6 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v2
 
-      - name: Create SSL certificate files
-        run: |
-          echo "${{ secrets.SSL_CERT_PEM }}" > certs/cert.pem
-          echo "${{ secrets.SSL_CERT_KEY }}" > certs/cert.key
-
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -25,6 +20,8 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             cd app/Infotech-Auto-Attendance
+            rm -r certs
+            git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/SSL-KEYS certs
             git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
             cp ./Attendance-Exra-ENV/.env.prod .env
             rm -r Attendance-Exra-ENV/
