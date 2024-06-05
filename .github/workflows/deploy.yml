@@ -23,4 +23,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
+            cd app/Infotech-Auto-Attendance
+            ls
+            git checkout main
+            git status
+            git pull
+            docker-compose down
             docker-compose up -d --build
