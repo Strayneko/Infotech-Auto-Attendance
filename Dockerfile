@@ -1,5 +1,5 @@
 # Use the Node.js 20 base image
-FROM FROM oven/bun:1
+FROM node:20-alpine
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
