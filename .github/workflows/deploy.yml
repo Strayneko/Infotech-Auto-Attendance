@@ -3,7 +3,7 @@ name: Deploy to VPS
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   build_and_push:
@@ -27,4 +27,5 @@ jobs:
             ls
             git status
             git pull
+            docker-compose down
             docker-compose up -d --build
