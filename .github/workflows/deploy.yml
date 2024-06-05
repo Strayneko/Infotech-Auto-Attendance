@@ -14,8 +14,8 @@ jobs:
 
       - name: Cloning env
         run: |
-          git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV .
-          cp .env.prod .env
+          git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
+          cp ./Attendance-Exra-ENV/.env.prod .env
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
