@@ -12,6 +12,7 @@ services:
       - ./certs/cert.key:/etc/ssl/private/cert.key
     depends_on:
       - app
+    tty: true
   redis:
     image: redis:latest
     container_name: redis
