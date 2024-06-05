@@ -9,7 +9,6 @@ export class TaskService {
     private readonly attendanceService: AttendanceService,
     private readonly logger: MyLoggerService,
   ) {}
-
   // called monday - friday every 8:25 am asia/jakarta
   @Cron('0 10 1 * * 1-5')
   public async handleClockInCron() {
