@@ -25,6 +25,7 @@ jobs:
           script: |
             cd app/Infotech-Auto-Attendance
             ls
+            git checkout main
             git status
             git pull
             docker-compose down
