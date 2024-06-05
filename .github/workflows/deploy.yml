@@ -1,19 +1,26 @@
-name: 🚀 Deploy Changes to cPanel
+name: Deploy to VPS
+
 on:
   push:
     branches:
       - main
+
 jobs:
-  FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+  build_and_push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Cloning env
+        run: |
+          git clone https://${{ GITHUB_ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
+          cp .env.prod .env
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
         with:
-          fetch-depth: 2
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            docker-compose up -d --build
