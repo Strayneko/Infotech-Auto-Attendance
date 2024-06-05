@@ -12,10 +12,6 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v2
 
-      - name: Cloning env
-        run: |
-          git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
-          cp ./Attendance-Exra-ENV/.env.prod .env
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -24,6 +20,8 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             cd app/Infotech-Auto-Attendance
+            git clone https://${{ secrets.ENV_TOKEN }}@github.com/Strayneko/Attendance-Exra-ENV
+            cp ./Attendance-Exra-ENV/.env.prod .env
             ls
             git checkout main
             git status
