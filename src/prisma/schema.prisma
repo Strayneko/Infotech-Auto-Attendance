@@ -41,15 +41,17 @@ model UserGroup {
 }
 
 model AttendanceData {
-  id           Int      @id @default(autoincrement())
-  User         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       Int?     @unique
-  locationName String
-  latitude     String
-  longitude    String
-  remarks      String?
-  timeZone     String
-  isActive     Int      @default(1) @db.SmallInt()
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  User            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int?     @unique
+  locationName    String
+  latitude        String
+  longitude       String
+  remarks         String?
+  timeZone        String
+  isActive        Int      @default(1) @db.SmallInt()
+  isSubscribeMail Int      @default(1) @db.SmallInt()
+  isImmediate     Int      @default(0) @db.SmallInt()
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

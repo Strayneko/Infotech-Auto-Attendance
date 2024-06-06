@@ -117,13 +117,15 @@ export class AttendanceService {
     attendanceData: AttendanceDataRequestDto,
   ): Promise<object | null> {
     try {
-      const data: AttendanceDataRequestDto = {
+      const data = {
         locationName: attendanceData.locationName,
         latitude: attendanceData.latitude,
         longitude: attendanceData.longitude,
         isActive: attendanceData.isActive,
         remarks: attendanceData.remarks || '',
         timeZone: attendanceData.timeZone,
+        isImmediate: attendanceData.isImmediate,
+        isSubscribeMail: attendanceData.isSubscribeMail,
       };
       const create = await this.prismaService.attendanceData.upsert({
         where: { userId: attendanceData.userId },
@@ -228,22 +230,41 @@ export class AttendanceService {
       );
 
       const date = new Date();
+      const time = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
       await this.cacheManager.del(`history-${data.email}`);
-      this.logger.log(
-        `${data.type} Success at: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
-      );
+      this.logger.log(`${data.type} Success at: ${time}`);
+
+      if (data.attendanceData.isSubscribeMail) {
+        await this.bullQueueService.dispatchMailQueue({
+          recipient: data.email,
+          subject: `Sucessfully ${data.type} at ${time}`,
+          body: `<p style="font-weight: bold">You have successfully ${data.type} at ${time} in ${data.attendanceData.locationName}</p>`,
+        });
+      }
     } catch (e) {
       this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
+      if (data.attendanceData.isSubscribeMail) {
+        await this.bullQueueService.dispatchMailQueue({
+          recipient: data.email,
+          subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
+          body: `<p>We cannot perfrom ${data.type} at the moment. Please report this to the developer</p>`,
+        });
+      }
     }
   }
 
+  /**
+   * Dispatch job for clock in/out
+   * @param {string} type
+   */
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
-    for (const attendance of attendances.data) {
-      // get random delay from 5 seconds to 10 minutes
-      const delay: number =
-        Math.floor(Math.random() * Constants.TEN_MINUTES) +
-        Constants.FIVE_SECONDS;
+    for (const attendance of this.shuffleArray(attendances.data)) {
+      const delay: number = this.getDelay(
+        attendance.attendanceData.isImmediate,
+      );
+
+      this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
       await this.bullQueueService.dispatchAutoClockInQueue(
         {
           ...attendance,
@@ -252,5 +273,35 @@ export class AttendanceService {
         { delay },
       );
     }
+  }
+
+  /**
+   * Shuffles an array of objects in place using the Fisher-Yates algorithm.
+   *
+   * @param {object[]} items - The array of objects to shuffle.
+   * @returns {object[]} The shuffled array of objects.
+   */
+  private shuffleArray(items: object[]): any {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }
+
+  private getDelay(isImmediate): number {
+    // get random number to randomize delay
+    const randomNumber = Math.floor(Math.random() * 15) + 1;
+
+    if (isImmediate == 1) {
+      return (
+        Math.floor(Math.random() * Constants.TEN_SECONDS) + Constants.ONE_SECOND
+      );
+    }
+    // get random delay for clock in/clock out
+    return (
+      Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
+      Constants.FIVE_SECONDS * randomNumber
+    );
   }
 }
