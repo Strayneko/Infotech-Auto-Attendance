@@ -17,6 +17,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Constants } from '../constants';
 import { AttendanceService } from '../attendance/attendance.service';
+import { ResponseServiceType } from '../types/response-service';
 
 @Injectable()
 export class UserService {
@@ -39,7 +40,9 @@ export class UserService {
    * @param data - The data object containing user request information.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
-  public async getUserInformation(data: LoginRequestDto): Promise<object> {
+  public async getUserInformation(
+    data: LoginRequestDto,
+  ): Promise<ResponseServiceType> {
     try {
       let dbUserData;
       if (data.type === 'login') {
@@ -55,6 +58,7 @@ export class UserService {
         return {
           status: true,
           message: '',
+          code: HttpStatus.OK,
           data: dbUserData,
         };
       }
@@ -75,6 +79,7 @@ export class UserService {
       return {
         status: true,
         message: '',
+        code: HttpStatus.OK,
         data: infotechData,
       };
     } catch (e) {
@@ -182,7 +187,9 @@ export class UserService {
    * @param data - The data object containing user information to store.
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user information if successful.
    */
-  public async storeUserInformation(data: UserRequestDto): Promise<object> {
+  public async storeUserInformation(
+    data: UserRequestDto,
+  ): Promise<ResponseServiceType> {
     try {
       const userInformation = await this.prismaService.$transaction(
         async (prisma) => {
@@ -232,6 +239,7 @@ export class UserService {
       return {
         status: true,
         message: '',
+        code: HttpStatus.CREATED,
         data: { ...userInformation, attendanceData: createAttendanceData },
       };
     } catch (e) {
@@ -240,7 +248,53 @@ export class UserService {
 
       return {
         status: false,
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
         message,
+      };
+    }
+  }
+
+  /**
+   * get user by the given token from db
+   * @param {string} token
+   * @return {Promise<ResponseServiceType>}
+   */
+  public async getUserByToken(token: string): Promise<ResponseServiceType> {
+    try {
+      let userData = null;
+      const cachedData = await this.cacheManager.get(`userdata-${token}`);
+      userData = cachedData
+        ? cachedData
+        : await this.prismaService.user.findFirst({
+            where: {
+              token,
+            },
+          });
+      if (cachedData === null) {
+        return {
+          status: false,
+          message: 'User is not found.',
+          code: HttpStatus.BAD_REQUEST,
+        };
+      }
+      await this.cacheManager.set(
+        `userdata-${token}`,
+        userData,
+        Constants.ONE_HOURS,
+      );
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: '',
+        data: userData,
+      };
+    } catch (e) {
+      this.logger.log(`Could not get user info for token ${token}`);
+
+      return {
+        status: false,
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
       };
     }
   }
