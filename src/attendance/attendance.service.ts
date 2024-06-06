@@ -124,6 +124,8 @@ export class AttendanceService {
         isActive: attendanceData.isActive,
         remarks: attendanceData.remarks || '',
         timeZone: attendanceData.timeZone,
+        isImmediate: attendanceData.isImmediate,
+        isSubscribeMail: attendanceData.isSubscribeMail,
       };
       const create = await this.prismaService.attendanceData.upsert({
         where: { userId: attendanceData.userId },
@@ -256,7 +258,9 @@ export class AttendanceService {
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
     for (const attendance of this.shuffleArray(attendances.data)) {
-      const delay: number = this.getDelay(attendance.isImmediate);
+      const delay: number = this.getDelay(
+        attendance.attendanceData.isImmediate,
+      );
 
       this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
       await this.bullQueueService.dispatchAutoClockInQueue(
@@ -283,11 +287,11 @@ export class AttendanceService {
     return items;
   }
 
-  private getDelay(isImmediate: boolean): number {
+  private getDelay(isImmediate): number {
     // get random number to randomize delay
     const randomNumber = Math.floor(Math.random() * 15) + 1;
 
-    if (isImmediate) {
+    if (isImmediate == 1) {
       return (
         Math.floor(Math.random() * Constants.TEN_SECONDS) + Constants.ONE_SECOND
       );

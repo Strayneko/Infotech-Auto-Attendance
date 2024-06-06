@@ -12,7 +12,7 @@ export class SendMailProcess {
 
   @Process('send-mail')
   public handleAttendanceClockIn(job: Job) {
-    this.logger.log(`Processing mail job for ${job.data.email}`);
+    this.logger.log(`Processing mail job for ${job.data.recipient}`);
     this.eventEmitter.emit('mail:dispatch', job.data);
   }
 }

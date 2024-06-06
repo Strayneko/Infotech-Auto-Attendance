@@ -219,6 +219,8 @@ export class UserService {
           isActive: data.attendanceData.isActive,
           remarks: data.attendanceData.remarks,
           timeZone: data.attendanceData.timeZone,
+          isSubscribeMail: data.attendanceData.isSubscribeMail,
+          isImmediate: data.attendanceData.isImmediate,
         });
       if (createAttendanceData === null)
         throw new Error('Failed to store attendance data.');

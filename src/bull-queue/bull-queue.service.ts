@@ -17,10 +17,17 @@ export class BullQueueService {
     );
 
     if (data.attendanceData.isSubscribeMail) {
-      const delayInMinutes = +settings.delay / 1000 / 60;
+      const delayInMinutes: number = +settings.delay / 1000 / 60;
+      const delayInSeconds: number = +settings.delay / 1000;
+      const type: string =
+        data.type.toLowerCase() === 'clock in' ? 'clocking in' : 'clocking out';
+
+      const subject: string = data.attendanceData.isImmediate
+        ? `You'll ${type} in ${Math.round(delayInSeconds)} seconds.`
+        : `You'll ${type} in ${Math.round(delayInMinutes)} minutes.`;
       await this.dispatchMailQueue({
         recipient: data.email,
-        subject: `You'll be ${data.type} in ${Math.round(delayInMinutes)} minutes.`,
+        subject,
       });
     }
     await this.attendanceQueue.add('auto-clock-in', data, settings);
