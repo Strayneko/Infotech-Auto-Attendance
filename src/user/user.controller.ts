@@ -1,19 +1,34 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { UserRequestDto } from './dto/user-request.dto';
+import { MeRequestDto } from './dto/me-request.dto';
+import { Response } from 'express';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('/getUserInfo')
-  public async getUsers(@Body() body: LoginRequestDto) {
-    return await this.userService.getUserInformation(body);
+  public async getUsers(@Body() body: LoginRequestDto, @Res() res: Response) {
+    const data = await this.userService.getUserInformation(body);
+
+    return res.status(data.code).json(data);
   }
 
   @Post('/storeUserInfo')
-  public async storeUserInfo(@Body() body: UserRequestDto) {
-    return await this.userService.storeUserInformation(body);
+  public async storeUserInfo(
+    @Body() body: UserRequestDto,
+    @Res() res: Response,
+  ) {
+    const store = await this.userService.storeUserInformation(body);
+
+    return res.status(store.code).json(store);
+  }
+
+  @Post('/me')
+  public async getUserInfo(@Body() body: MeRequestDto, @Res() res: Response) {
+    const data = await this.userService.getUserByToken(body.token);
+    return res.status(data.code).json(data);
   }
 }

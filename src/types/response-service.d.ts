@@ -3,5 +3,7 @@ export interface ResponseServiceType {
 
   message: string;
 
-  data: any;
+  code: number;
+
+  data?: any;
 }

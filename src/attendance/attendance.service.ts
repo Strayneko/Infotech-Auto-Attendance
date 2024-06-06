@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
@@ -154,6 +154,7 @@ export class AttendanceService {
         return {
           status: true,
           message: '',
+          code: HttpStatus.OK,
           data: cachedData,
         };
       }
@@ -174,6 +175,7 @@ export class AttendanceService {
       return {
         status: true,
         message: '',
+        code: HttpStatus.OK,
         data,
       };
     } catch (e) {
@@ -183,6 +185,7 @@ export class AttendanceService {
       return {
         status: false,
         message,
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
         data: null,
       };
     }
