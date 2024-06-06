@@ -238,6 +238,7 @@ export class AttendanceService {
         await this.bullQueueService.dispatchMailQueue({
           recipient: data.email,
           subject: `Sucessfully ${data.type} at ${time}`,
+          body: `<p style="font-weight: bold">You have successfully ${data.type} at ${time} in ${data.attendanceData.locationName}</p>`,
         });
       }
     } catch (e) {
@@ -246,6 +247,7 @@ export class AttendanceService {
         await this.bullQueueService.dispatchMailQueue({
           recipient: data.email,
           subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
+          body: `<p>We cannot perfrom ${data.type} at the moment. Please report this to the developer</p>`,
         });
       }
     }

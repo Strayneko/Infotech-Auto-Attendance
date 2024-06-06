@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { JobOptions, Queue } from 'bull';
 import { MyLoggerService } from '../my-logger/my-logger.service';
+import { MailType } from '../types/mail-type';
 
 @Injectable()
 export class BullQueueService {
@@ -28,12 +29,13 @@ export class BullQueueService {
       await this.dispatchMailQueue({
         recipient: data.email,
         subject,
+        body: `<p style="font-weight: bold; font-size: 24px">Reminder!</p><p>${subject}</p>`,
       });
     }
     await this.attendanceQueue.add('auto-clock-in', data, settings);
   }
 
-  public async dispatchMailQueue(data: any, settings: JobOptions = {}) {
+  public async dispatchMailQueue(data: MailType, settings: JobOptions = {}) {
     this.logger.log(`Mailing job added for ${data.recipient}`);
     await this.mailQueue.add('send-mail', data, settings);
   }
