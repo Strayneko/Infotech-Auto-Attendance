@@ -117,7 +117,7 @@ export class AttendanceService {
     attendanceData: AttendanceDataRequestDto,
   ): Promise<object | null> {
     try {
-      const data: AttendanceDataRequestDto = {
+      const data = {
         locationName: attendanceData.locationName,
         latitude: attendanceData.latitude,
         longitude: attendanceData.longitude,
@@ -232,16 +232,20 @@ export class AttendanceService {
       await this.cacheManager.del(`history-${data.email}`);
       this.logger.log(`${data.type} Success at: ${time}`);
 
-      await this.bullQueueService.dispatchMailQueue({
-        recipient: data.email,
-        subject: `Sucessfully ${data.type} at ${time}`,
-      });
+      if (data.attendanceData.isSubscribeMail) {
+        await this.bullQueueService.dispatchMailQueue({
+          recipient: data.email,
+          subject: `Sucessfully ${data.type} at ${time}`,
+        });
+      }
     } catch (e) {
       this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
-      await this.bullQueueService.dispatchMailQueue({
-        recipient: data.email,
-        subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
-      });
+      if (data.attendanceData.isSubscribeMail) {
+        await this.bullQueueService.dispatchMailQueue({
+          recipient: data.email,
+          subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
+        });
+      }
     }
   }
 
@@ -252,13 +256,7 @@ export class AttendanceService {
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
     for (const attendance of this.shuffleArray(attendances.data)) {
-      // get random number to randomize delay
-      const randomNumber = Math.floor(Math.random() * 15) + 1;
-
-      // get random delay for clock in/clock out
-      const delay: number =
-        Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
-        Constants.FIVE_SECONDS * randomNumber;
+      const delay: number = this.getDelay(attendance.isImmediate);
 
       this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
       await this.bullQueueService.dispatchAutoClockInQueue(
@@ -283,5 +281,21 @@ export class AttendanceService {
       [items[i], items[j]] = [items[j], items[i]];
     }
     return items;
+  }
+
+  private getDelay(isImmediate: boolean): number {
+    // get random number to randomize delay
+    const randomNumber = Math.floor(Math.random() * 15) + 1;
+
+    if (isImmediate) {
+      return (
+        Math.floor(Math.random() * Constants.TEN_SECONDS) + Constants.ONE_SECOND
+      );
+    }
+    // get random delay for clock in/clock out
+    return (
+      Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
+      Constants.FIVE_SECONDS * randomNumber
+    );
   }
 }

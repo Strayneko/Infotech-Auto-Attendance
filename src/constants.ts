@@ -3,4 +3,6 @@ export class Constants {
   public static readonly ONE_HOURS: number = 3600000;
   public static readonly FIVE_TEEN_MINUTES: number = 900000;
   public static readonly FIVE_SECONDS: number = 5000;
+  public static readonly ONE_SECOND: number = 1000;
+  public static readonly TEN_SECONDS: number = 10000;
 }

@@ -16,11 +16,13 @@ export class BullQueueService {
       `${data.type} job added for ${data.email} in ${settings.delay / 1000}s`,
     );
 
-    const delayInMinutes = +settings.delay / 1000 / 60;
-    await this.dispatchMailQueue({
-      recipient: data.email,
-      subject: `You'll be ${data.type} in ${Math.round(delayInMinutes)} minutes.`,
-    });
+    if (data.attendanceData.isSubscribeMail) {
+      const delayInMinutes = +settings.delay / 1000 / 60;
+      await this.dispatchMailQueue({
+        recipient: data.email,
+        subject: `You'll be ${data.type} in ${Math.round(delayInMinutes)} minutes.`,
+      });
+    }
     await this.attendanceQueue.add('auto-clock-in', data, settings);
   }
 
