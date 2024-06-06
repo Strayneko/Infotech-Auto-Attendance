@@ -237,13 +237,20 @@ export class AttendanceService {
     }
   }
 
+  /**
+   * Dispatch job for clock in/out
+   * @param {string} type
+   */
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
-    for (const attendance of attendances.data) {
-      // get random delay from 5 seconds to 10 minutes
+    for (const attendance of this.shuffleArray(attendances.data)) {
+      // get random number to randomize delay
+      const randomNumber = Math.floor(Math.random() * 15) + 1;
+
+      // get random delay for clock in/clock out
       const delay: number =
-        Math.floor(Math.random() * Constants.TEN_MINUTES) +
-        Constants.FIVE_SECONDS;
+        Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
+        Constants.FIVE_SECONDS * randomNumber;
       await this.bullQueueService.dispatchAutoClockInQueue(
         {
           ...attendance,
@@ -252,5 +259,19 @@ export class AttendanceService {
         { delay },
       );
     }
+  }
+
+  /**
+   * Shuffles an array of objects in place using the Fisher-Yates algorithm.
+   *
+   * @param {object[]} items - The array of objects to shuffle.
+   * @returns {object[]} The shuffled array of objects.
+   */
+  private shuffleArray(items: object[]) {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
   }
 }
