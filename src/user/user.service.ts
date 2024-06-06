@@ -270,7 +270,7 @@ export class UserService {
               token,
             },
           });
-      if (cachedData === null) {
+      if (userData === null) {
         return {
           status: false,
           message: 'User is not found.',
