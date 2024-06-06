@@ -228,12 +228,20 @@ export class AttendanceService {
       );
 
       const date = new Date();
+      const time = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
       await this.cacheManager.del(`history-${data.email}`);
-      this.logger.log(
-        `${data.type} Success at: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
-      );
+      this.logger.log(`${data.type} Success at: ${time}`);
+
+      await this.bullQueueService.dispatchMailQueue({
+        recipient: data.email,
+        subject: `Sucessfully ${data.type} at ${time}`,
+      });
     } catch (e) {
       this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
+      await this.bullQueueService.dispatchMailQueue({
+        recipient: data.email,
+        subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
+      });
     }
   }
 
@@ -251,6 +259,8 @@ export class AttendanceService {
       const delay: number =
         Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
         Constants.FIVE_SECONDS * randomNumber;
+
+      this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
       await this.bullQueueService.dispatchAutoClockInQueue(
         {
           ...attendance,
@@ -267,7 +277,7 @@ export class AttendanceService {
    * @param {object[]} items - The array of objects to shuffle.
    * @returns {object[]} The shuffled array of objects.
    */
-  private shuffleArray(items: object[]) {
+  private shuffleArray(items: object[]): any {
     for (let i = items.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [items[i], items[j]] = [items[j], items[i]];
