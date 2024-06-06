@@ -12,6 +12,8 @@ import { BullQueueModule } from './bull-queue/bull-queue.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { LoggerModule } from 'nestjs-rollbar';
+import { EmailModule } from './email/email.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 const redis = process.env.REDIS_SOCK_PATH
   ? {
@@ -43,6 +45,21 @@ const redis = process.env.REDIS_SOCK_PATH
     LoggerModule.forRoot({
       accessToken: process.env.ROLLBAR_TOKEN,
       environment: process.env.NODE_ENV,
+    }),
+    EmailModule,
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.MAIL_HOST,
+        port: +process.env.MAIL_PORT,
+        secure: false,
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASSWORD,
+        },
+      },
+      defaults: {
+        from: `Auto attendance ${process.env.MAIL_SENDER}`,
+      },
     }),
   ],
   controllers: [AppController],
