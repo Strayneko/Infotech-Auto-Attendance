@@ -20,13 +20,18 @@ export class AttendanceDataRequestDto {
   @IsNotEmpty()
   public timeZone: string;
 
-  @Transform((param) => +param.value || null)
+  @IsNotEmpty()
+  @Transform((param) => +param.value)
+  @IsIn([1, 0])
   public isSubscribeMail: number;
 
-  @Transform((param) => +param.value || null)
+  @IsNotEmpty()
+  @Transform((param) => +param.value)
+  @IsIn([1, 0])
   public isImmediate: number;
 
-  @IsNumber()
+  @IsNotEmpty()
   @Transform((param) => +param.value)
+  @IsIn([1, 0])
   public isActive: number;
 }
