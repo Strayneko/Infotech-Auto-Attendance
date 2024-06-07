@@ -21,15 +21,12 @@ export class AttendanceDataRequestDto {
   public timeZone: string;
 
   @Transform((param) => +param.value || null)
-  @IsIn([1, 0])
   public isSubscribeMail: number;
 
   @Transform((param) => +param.value || null)
-  @IsIn([1, 0])
   public isImmediate: number;
 
   @IsNumber()
   @Transform((param) => +param.value)
-  @IsIn([1, 0])
   public isActive: number;
 }
