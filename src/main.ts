@@ -7,7 +7,7 @@ import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.fi
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    allowedHeaders: ['Content-Type', 'X-App-Token', 'X-Request-Time'],
+    allowedHeaders: ['Content-Type', 'X-App-Token', 'X-Request-Time', '*'],
   });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
