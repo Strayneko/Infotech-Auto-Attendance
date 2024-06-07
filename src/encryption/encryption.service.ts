@@ -7,7 +7,7 @@ export class EncryptionService {
   private readonly initVectorKey: string;
   private readonly secretKey: string;
 
-  public constructor(private readonly logger: MyLoggerService) {
+  public constructor(private readonly logger: MyLoggerService = null) {
     this.initVectorKey = process.env.INIT_VECTOR_KEY;
     this.secretKey = process.env.SECRET_KEY;
   }
@@ -47,7 +47,10 @@ export class EncryptionService {
       );
       return instance.toString(CryptoJS.enc.Utf8);
     } catch (e) {
-      this.logger.error(e.message);
+      console.error(e.message);
+      if (this.logger !== null) {
+        this.logger.error(e.message);
+      }
       return null;
     }
   }
@@ -72,6 +75,14 @@ export class EncryptionService {
    * console.log(encryptedData); // Outputs the base64-encoded encrypted string if successful, or null if there was an error.
    */
   public async encrypt(data: string): Promise<string | null> {
+    return this.encryptSync(data);
+  }
+
+  /**
+   * Encrypt data asynchronously
+   * @return {Promise<string | null>}
+   */
+  public encryptSync(data: string) {
     try {
       const ivParameterSpec = CryptoJS.enc.Utf8.parse(this.initVectorKey);
       const secretKeySpec = CryptoJS.enc.Utf8.parse(this.secretKey);
@@ -82,7 +93,10 @@ export class EncryptionService {
       });
       return encrypted.toString();
     } catch (e) {
-      this.logger.error(e.message);
+      console.error(e.message);
+      if (this.logger !== null) {
+        this.logger.error(e.message);
+      }
       return null;
     }
   }

@@ -1,12 +1,14 @@
-import { Body, Controller, Post, Query, Res, Get, Param } from '@nestjs/common';
+import { Body, Controller, Post, Query, Res, Get, Param, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { Response } from 'express';
+import { OneTimeTokenGuard } from '../one-time-token/one-time-token.guard';
 
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
+  @UseGuards(new OneTimeTokenGuard())
   @Post('history')
   public async getAttendanceHistory(
     @Body() body: GetAttendanceHistoryRequestDto,
