@@ -1,10 +1,12 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { UserRequestDto } from './dto/user-request.dto';
 import { MeRequestDto } from './dto/me-request.dto';
 import { Response } from 'express';
+import { OneTimeTokenGuard } from '../one-time-token/one-time-token.guard';
 
+@UseGuards(new OneTimeTokenGuard())
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
