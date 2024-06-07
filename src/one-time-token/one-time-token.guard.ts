@@ -25,9 +25,10 @@ export class OneTimeTokenGuard implements CanActivate {
     if (appToken === undefined || appToken?.length === 0) {
       throw new UnauthorizedException('No app token provided.');
     }
+    console.log(request.body);
 
     const tokenFormula =
-      request.hostname +
+      process.env.FRONTEND_HOST +
       request.path +
       request.headers['user-agent'] +
       requestTime +
