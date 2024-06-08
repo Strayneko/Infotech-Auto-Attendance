@@ -8,6 +8,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     allowedHeaders: ['Content-Type', 'X-App-Token', 'X-Request-Time', '*'],
+    origin: [
+      'https://autoattendance.my.id',
+      'http://autoattendance.my.id',
+      'localhost:5173',
+      '127.0.0.1:5173',
+    ],
   });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
