@@ -19,13 +19,14 @@ export class OneTimeTokenGuard implements CanActivate {
   public canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    if (process.env.NODE_ENV !== 'production') return true;
+
     const request = context.switchToHttp().getRequest();
     const appToken = request.headers['x-app-token'];
     const requestTime = request.headers['x-request-time'];
     if (appToken === undefined || appToken?.length === 0) {
       throw new UnauthorizedException('No app token provided.');
     }
-    console.log(request.body);
 
     const tokenFormula =
       process.env.FRONTEND_HOST +
