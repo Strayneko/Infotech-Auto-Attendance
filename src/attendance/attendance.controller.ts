@@ -1,8 +1,18 @@
-import { Body, Controller, Post, Query, Res, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Query,
+  Res,
+  Get,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { Response } from 'express';
 import { OneTimeTokenGuard } from '../one-time-token/one-time-token.guard';
+import { AttendanceHistoryQueryDto } from './attendance-history-query.dto';
 
 @Controller('attendance')
 export class AttendanceController {
@@ -13,13 +23,15 @@ export class AttendanceController {
   public async getAttendanceHistory(
     @Body() body: GetAttendanceHistoryRequestDto,
     @Res() res: Response,
-    @Query('getLast') getLast: string,
+    @Query() query: AttendanceHistoryQueryDto,
   ) {
-    const getLastItem: boolean = getLast == '1';
+    const getLastItem: boolean = query.getLast === 1;
 
     const history: any = await this.attendanceService.getAttendanceHistory(
       body,
       getLastItem,
+      query.page,
+      query.perPage,
     );
     let httpCode: number = 200;
     if (history.status === false) httpCode = 400;

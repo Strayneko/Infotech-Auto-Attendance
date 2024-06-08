@@ -42,57 +42,23 @@ export class AttendanceService {
   public async getAttendanceHistory(
     data: GetAttendanceHistoryRequestDto,
     fetchLastItem: boolean = false,
+    page = 1,
+    perPage = 5,
   ): Promise<object> {
     try {
-      let cachedHistory: any = await this.cacheManager.get(
-        `history-${data.email}`,
-      );
-      if (cachedHistory) {
-        cachedHistory = fetchLastItem ? cachedHistory.pop() : cachedHistory;
-        return {
-          status: true,
-          message: '',
-          data: cachedHistory,
-        };
-      }
-      const payload = {
-        EmpCode: data.employeeId,
-        CustomerID: data.customerId,
-        CompanyID: data.companyId,
-      };
-      const payloadJson: string = JSON.stringify(payload);
-      const encryptedPayload: string =
-        await this.encryptionService.encrypt(payloadJson);
-
-      const historyData: any = await this.apiService.fetchApi(
-        this.apiConfig.getAttendanceHistoryPath,
-        encryptedPayload,
-        'attendance',
-        true,
-        {
-          email: data.email,
-          token: data.token,
-          imei: data.imei,
-        },
-      );
-      if (!historyData && historyData.data.length === 0) {
+      let historyData = await this.fetchHistoryFromInfotech(data);
+      if (historyData === null) {
         return {
           status: false,
           message: 'No history data found.',
         };
       }
 
-      await this.cacheManager.set(
-        `history-${data.email}`,
-        historyData,
-        Constants.ONE_HOURS,
-      );
-      let responseData = historyData;
-      if (fetchLastItem) responseData = historyData.pop();
+      historyData = fetchLastItem ? historyData.pop() : this.paginate(historyData, perPage, page);
       return {
         status: true,
         message: '',
-        data: responseData,
+        data: historyData,
       };
     } catch (e) {
       const message: string = `Can't fetch attendance history from infotech. Reason: ${e.message}`;
@@ -102,6 +68,76 @@ export class AttendanceService {
         message,
       };
     }
+  }
+
+  /**
+   * paginate the given array
+   * @param array
+   * @param pageSize
+   * @param currentPage
+   */
+  public paginate(array: any[], pageSize: number, currentPage: number = 1) {
+    const totalItems = array.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    // Ensure the current page is within bounds
+    currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const paginatedItems = array.slice(startIndex, endIndex);
+
+    return {
+      currentPage,
+      totalItems,
+      totalPages,
+      pageSize,
+      nextPage: currentPage < totalPages ? currentPage + 1 : null,
+      previousPage: currentPage > 1 ? currentPage - 1 : null,
+      hasPreviousPage: currentPage > 1,
+      hasNextPage: currentPage < totalPages,
+      items: paginatedItems,
+    };
+  }
+
+  /**
+   * fetch history data from infotech
+   * @param data
+   * @private
+   */
+  private async fetchHistoryFromInfotech(data: any) {
+    const cachedData = await this.cacheManager.get(`history-${data.email}`);
+    if (cachedData) return cachedData;
+
+    const payload = {
+      EmpCode: data.employeeId,
+      CustomerID: data.customerId,
+      CompanyID: data.companyId,
+    };
+    const payloadJson: string = JSON.stringify(payload);
+    const encryptedPayload: string =
+      await this.encryptionService.encrypt(payloadJson);
+
+    const historyData: any = await this.apiService.fetchApi(
+      this.apiConfig.getAttendanceHistoryPath,
+      encryptedPayload,
+      'attendance',
+      true,
+      {
+        email: data.email,
+        token: data.token,
+        imei: data.imei,
+      },
+    );
+    if (!historyData && historyData.data.length === 0) {
+      return null;
+    }
+    await this.cacheManager.set(
+      `history-${data.email}`,
+      historyData,
+      Constants.ONE_HOURS,
+    );
+    return historyData;
   }
 
   /**

@@ -13,4 +13,10 @@ export class AttendanceHistoryQueryDto {
   @IsOptional()
   @Min(1)
   public page?: number;
+
+  @Transform((param) => +param.value)
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  public perPage?: number;
 }
