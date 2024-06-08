@@ -26,6 +26,7 @@ model User {
   employeeId     String
   infotechUserId Int
   companyId      Int
+  userToken      String?
   attendanceData AttendanceData?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
