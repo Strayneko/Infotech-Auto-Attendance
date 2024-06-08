@@ -16,6 +16,9 @@ export class UserRequestDto {
 
   @IsNotEmpty()
   public token: string;
+  
+  @IsNotEmpty()
+  public userToken: string;
 
   @IsNotEmpty()
   @Transform((param) => param.value.toString())

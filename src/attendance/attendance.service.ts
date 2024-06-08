@@ -54,7 +54,9 @@ export class AttendanceService {
         };
       }
 
-      historyData = fetchLastItem ? historyData.pop() : this.paginate(historyData, perPage, page);
+      historyData = fetchLastItem
+        ? historyData.pop()
+        : this.paginate(historyData, perPage, page);
       return {
         status: true,
         message: '',

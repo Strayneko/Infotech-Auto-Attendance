@@ -118,7 +118,6 @@ export class UserService {
         imei: payload.imei,
       },
     );
-
     if (!response?.UserId) return null;
     if (response && response.UserId == 0) return null;
     const responseData = {
@@ -133,7 +132,24 @@ export class UserService {
       infotechUserId: response.UserAuthorization.UserId,
     };
 
-    return responseData;
+    const userToken = await this.buildUserToken(
+      responseData.email,
+      responseData.imei,
+      responseData.employeeId,
+    );
+
+    return { ...responseData, userToken };
+  }
+
+  private async buildUserToken(
+    imei: string,
+    email: string,
+    employeeId: string,
+  ) {
+    const userTokenFormula = { imei, email, employeeId };
+    return await this.encryptionService.encrypt(
+      JSON.stringify(userTokenFormula),
+    );
   }
 
   /**
@@ -167,6 +183,7 @@ export class UserService {
         idNumber: true,
         employeeId: true,
         infotechUserId: true,
+        userToken: true,
         companyId: true,
         createdAt: false,
         updatedAt: false,
@@ -198,6 +215,7 @@ export class UserService {
             update: {
               token: data.token,
               deviceId: data.deviceId,
+              userToken: data.userToken,
             },
             create: {
               email: data.email,
@@ -210,6 +228,7 @@ export class UserService {
               employeeId: data.employeeId,
               companyId: data.companyId,
               infotechUserId: data.infotechUserId,
+              userToken: data.userToken,
             },
           });
 
@@ -255,19 +274,19 @@ export class UserService {
   }
 
   /**
-   * get user by the given token from db
-   * @param {string} token
+   * get user by the given user token from db
+   * @param {string} userToken
    * @return {Promise<ResponseServiceType>}
    */
-  public async getUserByToken(token: string): Promise<ResponseServiceType> {
+  public async getUserByToken(userToken: string): Promise<ResponseServiceType> {
     try {
       let userData = null;
-      const cachedData = await this.cacheManager.get(`userdata-${token}`);
+      const cachedData = await this.cacheManager.get(`userdata-${userToken}`);
       userData = cachedData
         ? cachedData
         : await this.prismaService.user.findFirst({
             where: {
-              token,
+              userToken,
             },
           });
       if (userData === null) {
@@ -278,7 +297,7 @@ export class UserService {
         };
       }
       await this.cacheManager.set(
-        `userdata-${token}`,
+        `userdata-${userToken}`,
         userData,
         Constants.ONE_HOURS,
       );
@@ -289,7 +308,7 @@ export class UserService {
         data: userData,
       };
     } catch (e) {
-      this.logger.log(`Could not get user info for token ${token}`);
+      this.logger.log(`Could not get user info for token ${userToken}`);
 
       return {
         status: false,
