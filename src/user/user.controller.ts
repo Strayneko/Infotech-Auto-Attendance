@@ -30,7 +30,7 @@ export class UserController {
 
   @Post('/me')
   public async getUserInfo(@Body() body: MeRequestDto, @Res() res: Response) {
-    const data = await this.userService.getUserByToken(body.token);
+    const data = await this.userService.getUserByToken(body.userToken);
     return res.status(data.code).json(data);
   }
 }
