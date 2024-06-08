@@ -36,7 +36,9 @@ export class AttendanceService {
    * and error scenarios, returning an appropriate response object in either case.
    *
    * @param {GetAttendanceHistoryRequestDto} data - The request data transfer object containing employeeId, customerId, and companyId.
-   * @param {boolean} fetchLastItem - Option to retrieve just the last item
+   * @param {boolean} fetchLastItem - Option to retrieve just the last item   * @param {GetAttendanceHistoryRequestDto} data - The request data transfer object containing employeeId, customerId, and companyId.
+   * @param {number} page
+   * @param {number} perPage
    * @returns {Promise<{status: boolean, message: string, data?: any}>} - A promise that resolves to an object containing the status, message, and data (if any).
    */
   public async getAttendanceHistory(
@@ -55,7 +57,7 @@ export class AttendanceService {
       }
 
       historyData = fetchLastItem
-        ? historyData.pop()
+        ? historyData[0]
         : this.paginate(historyData, perPage, page);
       return {
         status: true,
@@ -134,12 +136,13 @@ export class AttendanceService {
     if (!historyData && historyData.data.length === 0) {
       return null;
     }
+    const reversedHistoryData = historyData.reverse();
     await this.cacheManager.set(
       `history-${data.email}`,
-      historyData,
+      reversedHistoryData,
       Constants.ONE_HOURS,
     );
-    return historyData;
+    return reversedHistoryData;
   }
 
   /**
