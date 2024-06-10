@@ -19,6 +19,7 @@ import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
 import { MyLoggerService } from '../my-logger/my-logger.service';
 import { BullQueueService } from '../bull-queue/bull-queue.service';
+import { UserLocationEnum } from './enums/user-location.enum';
 
 @Injectable()
 export class AttendanceService {
@@ -193,9 +194,13 @@ export class AttendanceService {
   /**
    * Get attendance data required for clock in
    */
-  public async getAttendanceRequiredData(): Promise<ResponseServiceType> {
+  public async getAttendanceRequiredData(
+    location: UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA,
+  ): Promise<ResponseServiceType> {
     try {
-      const cachedData = await this.cacheManager.get('attendances-data');
+      const cachedData = await this.cacheManager.get(
+        `attendances-data-${location}`,
+      );
       if (cachedData) {
         return {
           status: true,
@@ -205,6 +210,7 @@ export class AttendanceService {
         };
       }
       const data = await this.prismaService.user.findMany({
+        where: { userGroupId: location },
         include: {
           attendanceData: {
             where: { isActive: 1 },
@@ -213,7 +219,7 @@ export class AttendanceService {
       });
 
       await this.cacheManager.set(
-        'attendances-data',
+        `attendances-data-${location}`,
         data,
         Constants.TWENTY_FOUR_HOURS,
       );
@@ -305,9 +311,13 @@ export class AttendanceService {
   /**
    * Dispatch job for clock in/out
    * @param {string} type
+   * @param {UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA} location
    */
-  public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
-    const attendances = await this.getAttendanceRequiredData();
+  public async dispatchClockInOrClockOutJob(
+    type: string,
+    location: UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA,
+  ): Promise<void> {
+    const attendances = await this.getAttendanceRequiredData(location);
     for (const attendance of this.shuffleArray(attendances.data)) {
       const delay: number = this.getDelay(
         attendance.attendanceData.isImmediate,
