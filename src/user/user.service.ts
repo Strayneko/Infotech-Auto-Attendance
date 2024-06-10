@@ -1,9 +1,9 @@
 import {
-  Injectable,
-  Logger,
-  Inject,
   BadRequestException,
   HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginRequestDto } from './dto/login-request.dto';
@@ -19,6 +19,8 @@ import { Constants } from '../constants';
 import { AttendanceService } from '../attendance/attendance.service';
 import { ResponseServiceType } from '../types/response-service';
 import * as bcrypt from 'bcrypt';
+import { UserLocationEnum } from '../attendance/enums/user-location.enum';
+import { TimezoneCodeEnum } from '../attendance/enums/timezone-code.enum';
 
 @Injectable()
 export class UserService {
@@ -248,7 +250,10 @@ export class UserService {
           return userInformation;
         },
       );
-
+      const timeZone: string =
+        data.userGroupId == UserLocationEnum.INDONESIA
+          ? TimezoneCodeEnum.INDONESIA
+          : TimezoneCodeEnum.MALAYSIA;
       const createAttendanceData: any =
         await this.attendanceService.storeDataRequiredForClockIn({
           userId: userInformation.id,
@@ -257,9 +262,9 @@ export class UserService {
           longitude: data.attendanceData.longitude,
           isActive: data.attendanceData.isActive,
           remarks: data.attendanceData.remarks,
-          timeZone: data.attendanceData.timeZone,
           isSubscribeMail: data.attendanceData.isSubscribeMail,
           isImmediate: data.attendanceData.isImmediate,
+          timeZone,
         });
       if (createAttendanceData === null)
         throw new Error('Failed to store attendance data.');
