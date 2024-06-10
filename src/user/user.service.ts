@@ -19,7 +19,6 @@ import { Constants } from '../constants';
 import { AttendanceService } from '../attendance/attendance.service';
 import { ResponseServiceType } from '../types/response-service';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -352,7 +351,7 @@ export class UserService {
    * const result = exclude(user, keysToExclude);
    * // result: { id: 1, name: 'Alice', email: 'alice@example.com' }
    */
-  private exclude(user: User, keys: string[]) {
+  private exclude(user: any, keys: string[]) {
     return Object.fromEntries(
       Object.entries(user).filter(([key]) => !keys.includes(key)),
     );
