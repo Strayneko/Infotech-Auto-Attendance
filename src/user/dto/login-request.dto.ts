@@ -24,7 +24,9 @@ export class LoginRequestDto {
   @IsNotEmpty()
   public password?: string;
 
-  @ValidateIf((o) => o.type === 'login')
-  @IsNotEmpty()
   public employeeId?: string;
+
+  @ValidateIf((o) => o.type == 'login')
+  @IsNotEmpty()
+  public appPassword?: string;
 }
