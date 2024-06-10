@@ -346,13 +346,14 @@ export class AttendanceService {
   public async getLocationHistory(data: GetAttendanceHistoryRequestDto) {
     try {
       const history = await this.fetchHistoryFromInfotech(data);
+
       if (!history || history?.length === 0) {
         throw new NotFoundException('No attendance history found');
       }
 
       const locationHistory = history
         .reduce((acc, current) => {
-          if (!acc.some((obj) => obj.category === current.category)) {
+          if (!acc.some((obj) => obj.LocationNameC === current.LocationNameC)) {
             acc.push(current);
           }
           return acc;
