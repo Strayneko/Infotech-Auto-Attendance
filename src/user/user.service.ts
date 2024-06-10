@@ -18,6 +18,8 @@ import { Cache } from 'cache-manager';
 import { Constants } from '../constants';
 import { AttendanceService } from '../attendance/attendance.service';
 import { ResponseServiceType } from '../types/response-service';
+import * as bcrypt from 'bcrypt';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -48,7 +50,7 @@ export class UserService {
       if (data.type === 'login') {
         dbUserData = await this.getUserInformationFromDb(
           data.email,
-          data.employeeId.toUpperCase(),
+          data.appPassword,
         );
       }
       if (data.type === 'login' && dbUserData === null) {
@@ -155,22 +157,22 @@ export class UserService {
   /**
    * Retrieves user information from database.
    *
-   * @param data - The data object containing user request information.
+   * @param {string} email
+   * @param {string} appPassword
    * @returns A Promise resolving to an object containing the status of the operation, any message related to the operation, and the user data if successful.
    */
   public async getUserInformationFromDb(
     email: string,
-    employeeId: string,
+    appPassword: string,
   ): Promise<any | null> {
     const cachedData = await this.cacheManager.get(
-      `user-${email}-${employeeId}`,
+      `user-${email}-${appPassword}`,
     );
     if (cachedData) return cachedData;
 
     const userData = await this.prismaService.user.findUnique({
       where: {
         email,
-        employeeId,
       },
       select: {
         id: false,
@@ -183,6 +185,7 @@ export class UserService {
         idNumber: true,
         employeeId: true,
         infotechUserId: true,
+        managementAppPassword: true,
         userToken: true,
         companyId: true,
         createdAt: false,
@@ -190,8 +193,14 @@ export class UserService {
       },
     });
     if (!userData) return null;
+    const isPasswordMatch = await bcrypt.compare(
+      appPassword,
+      userData.managementAppPassword,
+    );
+    if (!isPasswordMatch) return null;
+
     await this.cacheManager.set(
-      `user-${email}-${employeeId}`,
+      `user-${email}-${appPassword}`,
       userData,
       Constants.ONE_HOURS,
     );
@@ -210,6 +219,10 @@ export class UserService {
     try {
       const userInformation = await this.prismaService.$transaction(
         async (prisma) => {
+          const encryptedAppPassword: string = await bcrypt.hash(
+            data.appPassword,
+            10,
+          );
           const userInformation = await prisma.user.upsert({
             where: { email: data.email },
             update: {
@@ -229,6 +242,7 @@ export class UserService {
               companyId: data.companyId,
               infotechUserId: data.infotechUserId,
               userToken: data.userToken,
+              managementAppPassword: encryptedAppPassword,
             },
           });
 
@@ -296,6 +310,8 @@ export class UserService {
           code: HttpStatus.BAD_REQUEST,
         };
       }
+
+      userData = this.exclude(userData, ['managementAppPassword']);
       await this.cacheManager.set(
         `userdata-${userToken}`,
         userData,
@@ -308,7 +324,9 @@ export class UserService {
         data: userData,
       };
     } catch (e) {
-      this.logger.log(`Could not get user info for token ${userToken}`);
+      this.logger.log(
+        `Could not get user info for token ${userToken}. Reason: ${e.message}`,
+      );
 
       return {
         status: false,
@@ -316,5 +334,27 @@ export class UserService {
         message: e.message,
       };
     }
+  }
+
+  /**
+   * Excludes specified keys from a user object.
+   *
+   * This method takes a user object and an array of keys, then returns a new object
+   * with the specified keys excluded from the user object.
+   *
+   * @param {User} user - The user object from which to exclude keys.
+   * @param {string[]} keys - An array of keys to be excluded from the user object.
+   * @returns {Object} A new object with the specified keys excluded.
+   *
+   * @example
+   * const user = { id: 1, name: 'Alice', password: 'secret', email: 'alice@example.com' };
+   * const keysToExclude = ['password'];
+   * const result = exclude(user, keysToExclude);
+   * // result: { id: 1, name: 'Alice', email: 'alice@example.com' }
+   */
+  private exclude(user: User, keys: string[]) {
+    return Object.fromEntries(
+      Object.entries(user).filter(([key]) => !keys.includes(key)),
+    );
   }
 }
