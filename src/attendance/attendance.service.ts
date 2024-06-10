@@ -1,4 +1,9 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
@@ -14,6 +19,7 @@ import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
 import { MyLoggerService } from '../my-logger/my-logger.service';
 import { BullQueueService } from '../bull-queue/bull-queue.service';
+import { UserLocationEnum } from './enums/user-location.enum';
 
 @Injectable()
 export class AttendanceService {
@@ -188,9 +194,13 @@ export class AttendanceService {
   /**
    * Get attendance data required for clock in
    */
-  public async getAttendanceRequiredData(): Promise<ResponseServiceType> {
+  public async getAttendanceRequiredData(
+    location: UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA,
+  ): Promise<ResponseServiceType> {
     try {
-      const cachedData = await this.cacheManager.get('attendances-data');
+      const cachedData = await this.cacheManager.get(
+        `attendances-data-${location}`,
+      );
       if (cachedData) {
         return {
           status: true,
@@ -200,6 +210,7 @@ export class AttendanceService {
         };
       }
       const data = await this.prismaService.user.findMany({
+        where: { userGroupId: location },
         include: {
           attendanceData: {
             where: { isActive: 1 },
@@ -208,7 +219,7 @@ export class AttendanceService {
       });
 
       await this.cacheManager.set(
-        'attendances-data',
+        `attendances-data-${location}`,
         data,
         Constants.TWENTY_FOUR_HOURS,
       );
@@ -300,9 +311,13 @@ export class AttendanceService {
   /**
    * Dispatch job for clock in/out
    * @param {string} type
+   * @param {UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA} location
    */
-  public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
-    const attendances = await this.getAttendanceRequiredData();
+  public async dispatchClockInOrClockOutJob(
+    type: string,
+    location: UserLocationEnum.INDONESIA | UserLocationEnum.MALAYSIA,
+  ): Promise<void> {
+    const attendances = await this.getAttendanceRequiredData(location);
     for (const attendance of this.shuffleArray(attendances.data)) {
       const delay: number = this.getDelay(
         attendance.attendanceData.isImmediate,
@@ -316,6 +331,57 @@ export class AttendanceService {
         },
         { delay },
       );
+    }
+  }
+
+  /**
+   * Retrieves the location history based on the provided attendance history request data.
+   *
+   * @param {GetAttendanceHistoryRequestDto} data - The data transfer object containing the necessary information to fetch the attendance history.
+   * @returns {Promise<{status: boolean, code: number, message: string, data?: Array<{id: number, locationName: string, latitude: number, longitude: number}>}>}
+   * An object containing the status, HTTP status code, message, and an optional data array with location history.
+   *
+   * @throws {NotFoundException} If no attendance history is found.
+   */
+  public async getLocationHistory(data: GetAttendanceHistoryRequestDto) {
+    try {
+      const history = await this.fetchHistoryFromInfotech(data);
+
+      if (!history || history?.length === 0) {
+        throw new NotFoundException('No attendance history found');
+      }
+
+      const locationHistory = history
+        .reduce((acc, current) => {
+          if (!acc.some((obj) => obj.LocationNameC === current.LocationNameC)) {
+            acc.push(current);
+          }
+          return acc;
+        }, [])
+        .map((items, idx) => {
+          return {
+            id: idx + 1,
+            locationName: items.LocationNameC,
+            latitude: items.LatN,
+            longitude: items.LngN,
+          };
+        });
+
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: '',
+        data: locationHistory,
+      };
+    } catch (e) {
+      const message = `Can't fetch location history, reason: ${e.message}`;
+      this.logger.error(message);
+
+      return {
+        status: false,
+        code: e.code,
+        message,
+      };
     }
   }
 

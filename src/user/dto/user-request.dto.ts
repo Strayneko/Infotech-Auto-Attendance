@@ -16,7 +16,7 @@ export class UserRequestDto {
 
   @IsNotEmpty()
   public token: string;
-  
+
   @IsNotEmpty()
   public userToken: string;
 
@@ -47,4 +47,7 @@ export class UserRequestDto {
   public attendanceData!: AttendanceDataRequestDto;
 
   public type?: 'Clock In' | 'Clock Out';
+
+  @IsNotEmpty()
+  public appPassword: string;
 }
