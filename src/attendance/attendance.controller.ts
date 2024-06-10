@@ -38,6 +38,17 @@ export class AttendanceController {
     return res.status(httpCode).json(history);
   }
 
+  @UseGuards(new OneTimeTokenGuard())
+  @Post('location')
+  public async getLocationHistory(
+    @Body() body: GetAttendanceHistoryRequestDto,
+    @Res() res: Response,
+  ) {
+    const data = await this.attendanceService.getLocationHistory(body);
+
+    return res.status(data.code).json(data);
+  }
+
   @Get('cron/:type')
   public async handleCron(@Param('type') type: string) {
     const clockType = type == 'in' ? 'Clock In' : 'Clock Out';

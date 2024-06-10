@@ -1,4 +1,9 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-request.dto';
 import { EncryptionService } from '../encryption/encryption.service';
 import { ApiService } from '../api/api.service';
@@ -316,6 +321,56 @@ export class AttendanceService {
         },
         { delay },
       );
+    }
+  }
+
+  /**
+   * Retrieves the location history based on the provided attendance history request data.
+   *
+   * @param {GetAttendanceHistoryRequestDto} data - The data transfer object containing the necessary information to fetch the attendance history.
+   * @returns {Promise<{status: boolean, code: number, message: string, data?: Array<{id: number, locationName: string, latitude: number, longitude: number}>}>}
+   * An object containing the status, HTTP status code, message, and an optional data array with location history.
+   *
+   * @throws {NotFoundException} If no attendance history is found.
+   */
+  public async getLocationHistory(data: GetAttendanceHistoryRequestDto) {
+    try {
+      const history = await this.fetchHistoryFromInfotech(data);
+      if (!history || history?.length === 0) {
+        throw new NotFoundException('No attendance history found');
+      }
+
+      const locationHistory = history
+        .reduce((acc, current) => {
+          if (!acc.some((obj) => obj.category === current.category)) {
+            acc.push(current);
+          }
+          return acc;
+        }, [])
+        .map((items, idx) => {
+          return {
+            id: idx + 1,
+            locationName: items.LocationNameC,
+            latitude: items.LatN,
+            longitude: items.LngN,
+          };
+        });
+
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: '',
+        data: locationHistory,
+      };
+    } catch (e) {
+      const message = `Can't fetch location history, reason: ${e.message}`;
+      this.logger.error(message);
+
+      return {
+        status: false,
+        code: e.code,
+        message,
+      };
     }
   }
 
