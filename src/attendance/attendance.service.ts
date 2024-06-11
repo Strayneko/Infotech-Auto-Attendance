@@ -349,11 +349,8 @@ export class AttendanceService {
       const locationHistory = history
         .reduce((acc, current) => {
           if (
-            !acc.some(
-              (obj) =>
-                obj.LocationNameC.length > 0 &&
-                obj.LocationNameC === current.LocationNameC,
-            )
+            !acc.some((obj) => obj.LocationNameC === current.LocationNameC) &&
+            current.LocationNameC.length > 0
           ) {
             acc.push(current);
           }
