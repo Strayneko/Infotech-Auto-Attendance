@@ -19,6 +19,9 @@ import { UserRequestDto } from '../user/dto/user-request.dto';
 import { ResponseServiceType } from '../types/response-service';
 import { MyLoggerService } from '../my-logger/my-logger.service';
 import { BullQueueService } from '../bull-queue/bull-queue.service';
+import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
+import { UpdateLocationRequestDto } from './dto/update-location-request.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AttendanceService {
@@ -389,6 +392,11 @@ export class AttendanceService {
     return items;
   }
 
+  /**
+   * Get random delay for clock in/out
+   * @param isImmediate
+   * @private
+   */
   private getDelay(isImmediate): number {
     // get random number to randomize delay
     const randomNumber = Math.floor(Math.random() * 15) + 1;
@@ -403,5 +411,89 @@ export class AttendanceService {
       Math.floor(Math.random() * Constants.FIVE_TEEN_MINUTES) +
       Constants.FIVE_SECONDS * randomNumber
     );
+  }
+
+  public async updateAttendanceStatus(
+    data: UpdateStatusRequestDto,
+  ): Promise<ResponseServiceType> {
+    try {
+      const attendance = await this.prismaService.attendanceData.count({
+        where: { userId: data.userId },
+      });
+
+      if (attendance === 0)
+        throw new NotFoundException('User attendance data does not exist');
+
+      const isActive = data.status === 'enable' ? 1 : 0;
+      const update = await this.prismaService.attendanceData.update({
+        where: { userId: data.userId },
+        data: {
+          isActive,
+        },
+      });
+
+      const messageType = isActive ? 'Enabled' : 'Disabled';
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: `Auto attendance has been ${messageType}.`,
+        data: update,
+      };
+    } catch (e) {
+      const messageType = data.status === 'enable' ? 'Enable' : 'Disable';
+      const message = `Failed to ${messageType} auto attendance. Reason: ${e.message}`;
+      this.logger.error(message);
+
+      return {
+        status: false,
+        code: e.code || e.status,
+        message,
+      };
+    }
+  }
+
+  public async updateAttendanceLocation(
+    data: UpdateLocationRequestDto,
+  ): Promise<ResponseServiceType> {
+    try {
+      const attendance = await this.prismaService.attendanceData.count({
+        where: { userId: data.userId },
+      });
+      if (attendance === 0)
+        throw new NotFoundException('User attendance data does not exist');
+
+      let updateData: Prisma.AttendanceDataUpdateInput = {
+        locationName: data.locationName,
+        longitude: data.longitude,
+        latitude: data.latitude,
+      };
+      if (data.timeZone !== null || data?.timeZone.length > 0) {
+        updateData = {
+          ...updateData,
+          timeZone: data.timeZone,
+        };
+      }
+
+      const update = await this.prismaService.attendanceData.update({
+        where: { userId: data.userId },
+        data: updateData,
+      });
+
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: 'Location has been updated.',
+        data: update,
+      };
+    } catch (e) {
+      const message = `Failed to update attendance location. Reason: ${e.message}`;
+      this.logger.error(message);
+
+      return {
+        status: false,
+        code: e.code || e.status,
+        message,
+      };
+    }
   }
 }

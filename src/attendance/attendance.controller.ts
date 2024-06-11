@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Post,
+  Put,
   Query,
   Res,
   Get,
@@ -14,6 +15,8 @@ import { GetAttendanceHistoryRequestDto } from './dto/get-attendance-history-req
 import { Response } from 'express';
 import { OneTimeTokenGuard } from '../one-time-token/one-time-token.guard';
 import { AttendanceHistoryQueryDto } from './attendance-history-query.dto';
+import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
+import { UpdateLocationRequestDto } from './dto/update-location-request.dto';
 
 @Controller('attendance')
 export class AttendanceController {
@@ -46,6 +49,26 @@ export class AttendanceController {
     @Res() res: Response,
   ) {
     const data = await this.attendanceService.getLocationHistory(body);
+
+    return res.status(data.code).json(data);
+  }
+
+  @UseGuards(new OneTimeTokenGuard())
+  @Put('updateStatus')
+  public async updateStatus(
+    @Body() body: UpdateStatusRequestDto,
+    @Res() res: Response,
+  ) {
+    const data = await this.attendanceService.updateAttendanceStatus(body);
+
+    return res.status(data.code).json(data);
+  }
+  @Put('updateLocation')
+  public async updateLocation(
+    @Body() body: UpdateLocationRequestDto,
+    @Res() res: Response,
+  ) {
+    const data = await this.attendanceService.updateAttendanceLocation(body);
 
     return res.status(data.code).json(data);
   }
