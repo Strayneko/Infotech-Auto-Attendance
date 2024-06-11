@@ -436,13 +436,15 @@ export class AttendanceService {
 
       const messageType = isActive ? 'Enabled' : 'Disabled';
       let userData = await this.prismaService.user.findUnique({
-        where: {id: data.userId},
+        where: { id: data.userId },
         include: {
           attendanceData: true,
-        }
-      })
+        },
+      });
 
-      userData = this.helperService.excludeField(userData, ['managementAppPassword'])
+      userData = this.helperService.excludeField(userData, [
+        'managementAppPassword',
+      ]);
       return {
         status: true,
         code: HttpStatus.OK,
