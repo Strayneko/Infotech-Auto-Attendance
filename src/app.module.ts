@@ -14,6 +14,7 @@ import { AppController } from './app.controller';
 import { LoggerModule } from 'nestjs-rollbar';
 import { EmailModule } from './email/email.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { HelperModule } from './helper/helper.module';
 
 const redis = process.env.REDIS_SOCK_PATH
   ? {
@@ -61,8 +62,8 @@ const redis = process.env.REDIS_SOCK_PATH
         from: `Auto attendance ${process.env.MAIL_SENDER}`,
       },
     }),
+    HelperModule,
   ],
   controllers: [AppController],
-  providers: [],
 })
 export class AppModule {}
