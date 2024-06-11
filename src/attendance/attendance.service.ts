@@ -22,6 +22,7 @@ import { BullQueueService } from '../bull-queue/bull-queue.service';
 import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { UpdateLocationRequestDto } from './dto/update-location-request.dto';
 import { Prisma } from '@prisma/client';
+import { HelperService } from '../helper/helper.service';
 
 @Injectable()
 export class AttendanceService {
@@ -32,6 +33,7 @@ export class AttendanceService {
     private readonly apiConfig: ApiConfig,
     private readonly logger: MyLoggerService,
     private readonly bullQueueService: BullQueueService,
+    private readonly helperService: HelperService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -425,7 +427,7 @@ export class AttendanceService {
         throw new NotFoundException('User attendance data does not exist');
 
       const isActive = data.status === 'enable' ? 1 : 0;
-      const update = await this.prismaService.attendanceData.update({
+      await this.prismaService.attendanceData.update({
         where: { userId: data.userId },
         data: {
           isActive,
@@ -433,11 +435,19 @@ export class AttendanceService {
       });
 
       const messageType = isActive ? 'Enabled' : 'Disabled';
+      let userData = await this.prismaService.user.findUnique({
+        where: {id: data.userId},
+        include: {
+          attendanceData: true,
+        }
+      })
+
+      userData = this.helperService.excludeField(userData, ['managementAppPassword'])
       return {
         status: true,
         code: HttpStatus.OK,
         message: `Auto attendance has been ${messageType}.`,
-        data: update,
+        data: userData,
       };
     } catch (e) {
       const messageType = data.status === 'enable' ? 'Enable' : 'Disable';
