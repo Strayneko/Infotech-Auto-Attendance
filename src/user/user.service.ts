@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginRequestDto } from './dto/login-request.dto';
@@ -21,6 +22,7 @@ import { ResponseServiceType } from '../types/response-service';
 import * as bcrypt from 'bcrypt';
 import { UserLocationEnum } from '../attendance/enums/user-location.enum';
 import { TimezoneCodeEnum } from '../attendance/enums/timezone-code.enum';
+import { UpdatePasswordRequestDto } from './dto/update-password-request.dto';
 
 @Injectable()
 export class UserService {
@@ -360,5 +362,50 @@ export class UserService {
     return Object.fromEntries(
       Object.entries(user).filter(([key]) => !keys.includes(key)),
     );
+  }
+
+  public async updateAppPassword(
+    data: UpdatePasswordRequestDto,
+  ): Promise<ResponseServiceType> {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: { id: data.userId },
+        select: { id: true, managementAppPassword: true },
+      });
+
+      if (!user) throw new NotFoundException('User not found.');
+
+      const isOldPassword = await bcrypt.compare(
+        data.appPassword,
+        user.managementAppPassword,
+      );
+      if (isOldPassword)
+        throw new BadRequestException(
+          'Your new app password is same as the current app password',
+        );
+
+      const update = await this.prismaService.user.update({
+        where: { id: data.userId },
+        data: {
+          managementAppPassword: await bcrypt.hash(data.appPassword, 10),
+        },
+      });
+
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: 'App password has been updated.',
+        data: update,
+      };
+    } catch (e) {
+      const message = `Failed to update app password. Reason: ${e.message}`;
+
+      this.logger.error(message);
+      return {
+        status: false,
+        code: e.code || e.status,
+        message,
+      };
+    }
   }
 }
