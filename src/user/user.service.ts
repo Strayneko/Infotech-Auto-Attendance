@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginRequestDto } from './dto/login-request.dto';
@@ -21,17 +22,20 @@ import { ResponseServiceType } from '../types/response-service';
 import * as bcrypt from 'bcrypt';
 import { UserLocationEnum } from '../attendance/enums/user-location.enum';
 import { TimezoneCodeEnum } from '../attendance/enums/timezone-code.enum';
+import { UpdatePasswordRequestDto } from './dto/update-password-request.dto';
+import { HelperService } from '../helper/helper.service';
 
 @Injectable()
 export class UserService {
   private readonly logger: Logger;
 
   public constructor(
-    protected readonly apiService: ApiService,
-    protected readonly encryptionService: EncryptionService,
-    protected readonly prismaService: PrismaService,
-    protected readonly apiConfig: ApiConfig,
-    protected readonly attendanceService: AttendanceService,
+    private readonly apiService: ApiService,
+    private readonly encryptionService: EncryptionService,
+    private readonly prismaService: PrismaService,
+    private readonly apiConfig: ApiConfig,
+    private readonly attendanceService: AttendanceService,
+    private readonly helperService: HelperService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.logger = new Logger(UserService.name);
@@ -171,26 +175,12 @@ export class UserService {
     );
     if (cachedData) return cachedData;
 
-    const userData = await this.prismaService.user.findUnique({
+    let userData = await this.prismaService.user.findUnique({
       where: {
         email,
       },
-      select: {
-        id: false,
-        userGroupId: true,
-        email: true,
-        token: true,
-        imei: true,
-        deviceId: true,
-        customerId: true,
-        idNumber: true,
-        employeeId: true,
-        infotechUserId: true,
-        managementAppPassword: true,
-        userToken: true,
-        companyId: true,
-        createdAt: false,
-        updatedAt: false,
+      include: {
+        attendanceData: true,
       },
     });
     if (!userData) return null;
@@ -199,7 +189,7 @@ export class UserService {
       userData.managementAppPassword,
     );
     if (!isPasswordMatch) return null;
-
+    userData = this.helperService.excludeField(userData, ['managementAppPassword']) as any;
     await this.cacheManager.set(
       `user-${email}-${appPassword}`,
       userData,
@@ -315,7 +305,7 @@ export class UserService {
         };
       }
 
-      userData = this.exclude(userData, ['managementAppPassword']);
+      userData = this.helperService.excludeField(userData, ['managementAppPassword']);
       await this.cacheManager.set(
         `userdata-${userToken}`,
         userData,
@@ -340,25 +330,48 @@ export class UserService {
     }
   }
 
-  /**
-   * Excludes specified keys from a user object.
-   *
-   * This method takes a user object and an array of keys, then returns a new object
-   * with the specified keys excluded from the user object.
-   *
-   * @param {User} user - The user object from which to exclude keys.
-   * @param {string[]} keys - An array of keys to be excluded from the user object.
-   * @returns {Object} A new object with the specified keys excluded.
-   *
-   * @example
-   * const user = { id: 1, name: 'Alice', password: 'secret', email: 'alice@example.com' };
-   * const keysToExclude = ['password'];
-   * const result = exclude(user, keysToExclude);
-   * // result: { id: 1, name: 'Alice', email: 'alice@example.com' }
-   */
-  private exclude(user: any, keys: string[]) {
-    return Object.fromEntries(
-      Object.entries(user).filter(([key]) => !keys.includes(key)),
-    );
+  public async updateAppPassword(
+    data: UpdatePasswordRequestDto,
+  ): Promise<ResponseServiceType> {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: { id: data.userId },
+        select: { id: true, managementAppPassword: true },
+      });
+
+      if (!user) throw new NotFoundException('User not found.');
+
+      const isOldPassword = await bcrypt.compare(
+        data.appPassword,
+        user.managementAppPassword,
+      );
+      if (isOldPassword)
+        throw new BadRequestException(
+          'Your new app password is same as the current app password',
+        );
+
+      const update = await this.prismaService.user.update({
+        where: { id: data.userId },
+        data: {
+          managementAppPassword: await bcrypt.hash(data.appPassword, 10),
+        },
+      });
+
+      return {
+        status: true,
+        code: HttpStatus.OK,
+        message: 'App password has been updated.',
+        data: update,
+      };
+    } catch (e) {
+      const message = `Failed to update app password. Reason: ${e.message}`;
+
+      this.logger.error(message);
+      return {
+        status: false,
+        code: e.code || e.status,
+        message,
+      };
+    }
   }
 }

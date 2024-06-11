@@ -26,7 +26,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
       });
       return;
     }
-    response.json(status).json({
+    response.status(status).json({
       status: false,
       code: status,
       message: exception.message,
