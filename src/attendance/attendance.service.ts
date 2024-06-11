@@ -348,7 +348,10 @@ export class AttendanceService {
 
       const locationHistory = history
         .reduce((acc, current) => {
-          if (!acc.some((obj) => obj.LocationNameC === current.LocationNameC)) {
+          if (
+            !acc.some((obj) => obj.LocationNameC === current.LocationNameC) &&
+            current.LocationNameC.length > 0
+          ) {
             acc.push(current);
           }
           return acc;
@@ -486,16 +489,26 @@ export class AttendanceService {
         };
       }
 
-      const update = await this.prismaService.attendanceData.update({
+      await this.prismaService.attendanceData.update({
         where: { userId: data.userId },
         data: updateData,
       });
 
+      let userData = await this.prismaService.user.findUnique({
+        where: { id: data.userId },
+        include: {
+          attendanceData: true,
+        },
+      });
+
+      userData = this.helperService.excludeField(userData, [
+        'managementAppPassword',
+      ]);
       return {
         status: true,
         code: HttpStatus.OK,
         message: 'Location has been updated.',
-        data: update,
+        data: userData,
       };
     } catch (e) {
       const message = `Failed to update attendance location. Reason: ${e.message}`;
