@@ -372,7 +372,7 @@ export class AttendanceService {
 
       return {
         status: false,
-        code: e.code,
+        code: e.code || e.status,
         message,
       };
     }
