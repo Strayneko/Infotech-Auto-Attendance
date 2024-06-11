@@ -189,7 +189,9 @@ export class UserService {
       userData.managementAppPassword,
     );
     if (!isPasswordMatch) return null;
-    userData = this.helperService.excludeField(userData, ['managementAppPassword']) as any;
+    userData = this.helperService.excludeField(userData, [
+      'managementAppPassword',
+    ]) as any;
     await this.cacheManager.set(
       `user-${email}-${appPassword}`,
       userData,
@@ -305,7 +307,9 @@ export class UserService {
         };
       }
 
-      userData = this.helperService.excludeField(userData, ['managementAppPassword']);
+      userData = this.helperService.excludeField(userData, [
+        'managementAppPassword',
+      ]);
       await this.cacheManager.set(
         `userdata-${userToken}`,
         userData,
