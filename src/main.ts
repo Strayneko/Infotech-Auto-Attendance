@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ValidationExceptionFilter } from './filters/validation-exception.filter';
 import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter';
+import { GlobalExceptionFilter } from './filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,7 @@ async function bootstrap() {
     ],
   });
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new ValidationExceptionFilter());
   app.useGlobalFilters(new UnauthorizedExceptionFilter());
