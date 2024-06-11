@@ -31,9 +31,6 @@ model User {
   attendanceData        AttendanceData?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-
-  @@index(fields: [id, email, userToken])
-  @@map("User")
 }
 
 model UserGroup {
@@ -59,7 +56,4 @@ model AttendanceData {
   isImmediate     Int      @default(0) @db.SmallInt()
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  @@index([userId, id])
-  @@map("AttendanceData")
 }
