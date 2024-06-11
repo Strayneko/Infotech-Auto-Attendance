@@ -314,13 +314,13 @@ export class AttendanceService {
       );
 
       this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
-      // await this.bullQueueService.dispatchAutoClockInQueue(
-      //   {
-      //     ...attendance,
-      //     type,
-      //   },
-      //   { delay },
-      // );
+      await this.bullQueueService.dispatchAutoClockInQueue(
+        {
+          ...attendance,
+          type,
+        },
+        { delay },
+      );
     }
   }
 
