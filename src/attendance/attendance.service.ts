@@ -23,6 +23,7 @@ import { UpdateStatusRequestDto } from './dto/update-status-request.dto';
 import { UpdateLocationRequestDto } from './dto/update-location-request.dto';
 import { Prisma } from '@prisma/client';
 import { HelperService } from '../helper/helper.service';
+import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class AttendanceService {
@@ -191,7 +192,7 @@ export class AttendanceService {
       return create;
     } catch (e) {
       this.logger.error(`Cannot store attendance data. Reason: ${e.message}`);
-      return null;
+      throw new Error(e.message);
     }
   }
 
@@ -298,11 +299,13 @@ export class AttendanceService {
         });
       }
     } catch (e) {
-      this.logger.error(`Cannot ${data.type}. Reason: ${e.message}`);
+      const message = `Failed to auto ${data.type} at the moment for user: ${data.email}, please do ${data.type} manually.`;
+      this.logger.error(`${message}. Reason: ${e.message}`);
+      Sentry.captureException(e);
       if (data.attendanceData.isSubscribeMail) {
         await this.bullQueueService.dispatchMailQueue({
           recipient: data.email,
-          subject: `Failed to auto ${data.type} at the moment for user: ${data.email}, please do ${data.type} manually.`,
+          subject: message,
           body: `<p>We cannot perfrom ${data.type} at the moment. Please report this to the developer</p>`,
         });
       }
@@ -317,7 +320,7 @@ export class AttendanceService {
     const attendances = await this.getAttendanceRequiredData();
     for (const attendance of attendances.data) {
       const delay: number = this.getDelay(
-        attendance.attendanceData?.isImmediate || 1,
+        attendance.attendanceData?.isImmediate ?? 1,
       );
 
       this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
