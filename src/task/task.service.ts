@@ -17,7 +17,7 @@ export class TaskService {
   }
 
   // called monday - friday every 5:30 pm asia/jakarta
-  @Cron('0 31 10 * * 1-5')
+  @Cron('0 30 10 * * 1-5')
   public async handleClockOutCron() {
     this.logger.log('Start clock out cron job');
     await this.attendanceService.dispatchClockInOrClockOutJob('Clock Out');
