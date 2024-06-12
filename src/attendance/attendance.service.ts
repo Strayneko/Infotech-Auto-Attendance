@@ -286,7 +286,9 @@ export class AttendanceService {
       const date = new Date();
       const time = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
       await this.cacheManager.del(`history-${data.email}`);
-      this.logger.log(`${data.type} Success at: ${time}`);
+      this.logger.log(
+        `${data.type} Success for user: ${data.email} at: ${time}`,
+      );
 
       if (data.attendanceData.isSubscribeMail) {
         await this.bullQueueService.dispatchMailQueue({
@@ -300,7 +302,7 @@ export class AttendanceService {
       if (data.attendanceData.isSubscribeMail) {
         await this.bullQueueService.dispatchMailQueue({
           recipient: data.email,
-          subject: `Failed to auto ${data.type} at the moment, please do ${data.type} manually.`,
+          subject: `Failed to auto ${data.type} at the moment for user: ${data.email}, please do ${data.type} manually.`,
           body: `<p>We cannot perfrom ${data.type} at the moment. Please report this to the developer</p>`,
         });
       }
@@ -313,9 +315,9 @@ export class AttendanceService {
    */
   public async dispatchClockInOrClockOutJob(type: string): Promise<void> {
     const attendances = await this.getAttendanceRequiredData();
-    for (const attendance of this.shuffleArray(attendances.data)) {
+    for (const attendance of attendances.data) {
       const delay: number = this.getDelay(
-        attendance.attendanceData.isImmediate,
+        attendance.attendanceData?.isImmediate || 1,
       );
 
       this.logger.log(`${type} in ${delay / 1000}s for ${attendance.email}`);
@@ -372,7 +374,7 @@ export class AttendanceService {
         data: locationHistory,
       };
     } catch (e) {
-      const message = `Can't fetch location history, reason: ${e.message}`;
+      const message = `Can't fetch location history for user: ${data.email}, reason: ${e.message}`;
       this.logger.error(message);
 
       return {
@@ -427,7 +429,9 @@ export class AttendanceService {
       });
 
       if (attendance === 0)
-        throw new NotFoundException('User attendance data does not exist');
+        throw new NotFoundException(
+          `User attendance data for userId: ${data.userId} does not exist`,
+        );
 
       const isActive = data.status === 'enable' ? 1 : 0;
       await this.prismaService.attendanceData.update({
@@ -456,7 +460,7 @@ export class AttendanceService {
       };
     } catch (e) {
       const messageType = data.status === 'enable' ? 'Enable' : 'Disable';
-      const message = `Failed to ${messageType} auto attendance. Reason: ${e.message}`;
+      const message = `Failed to ${messageType} auto attendance for userId: ${data.userId}. Reason: ${e.message}`;
       this.logger.error(message);
 
       return {
@@ -475,7 +479,9 @@ export class AttendanceService {
         where: { userId: data.userId },
       });
       if (attendance === 0)
-        throw new NotFoundException('User attendance data does not exist');
+        throw new NotFoundException(
+          `User attendance data for userId: ${data.userId} does not exist`,
+        );
 
       let updateData: Prisma.AttendanceDataUpdateInput = {
         locationName: data.locationName,
@@ -511,7 +517,7 @@ export class AttendanceService {
         data: userData,
       };
     } catch (e) {
-      const message = `Failed to update attendance location. Reason: ${e.message}`;
+      const message = `Failed to update attendance location for userId: ${data.userId}. Reason: ${e.message}`;
       this.logger.error(message);
 
       return {
