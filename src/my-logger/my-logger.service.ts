@@ -1,55 +1,54 @@
-import { Inject, Injectable, Logger, LoggerService } from '@nestjs/common';
+import { Inject, Injectable, Logger, ConsoleLogger } from '@nestjs/common';
 import { RollbarLogger } from 'nestjs-rollbar';
+import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
+import * as path from 'path';
+import * as moment from 'moment';
 
 @Injectable()
-export class MyLoggerService implements LoggerService {
-  private readonly logger: Logger;
+export class MyLoggerService extends ConsoleLogger {
   public constructor(
-    @Inject('LOGGER_OPTIONS') private options: Record<string, any>,
+    @Inject('LOGGER_OPTIONS') protected options: Record<string, any>,
     private readonly rollbarLogger: RollbarLogger,
   ) {
-    this.logger = new Logger(options.serviceName);
-  }
-  /**
-   * Write a 'log' level log.
-   */
-  log(message: any, ...optionalParams: any[]) {
-    this.logger.log(message, ...optionalParams);
-    this.rollbarLogger.log(message, ...optionalParams);
+    super();
   }
 
-  /**
-   * Write a 'fatal' level log.
-   */
-  fatal(message: any, ...optionalParams: any[]) {
-    this.logger.fatal(message, ...optionalParams);
+  protected async logToFile(entry) {
+    const formattedEntry = `${Intl.DateTimeFormat('en-US', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'America/Chicago',
+    }).format(new Date())}\t${entry}\n`;
+
+    try {
+      if (!fs.existsSync(path.join(__dirname, '..', '..', 'logs'))) {
+        await fsPromises.mkdir(path.join(__dirname, '..', '..', 'logs'));
+      }
+      const now = moment();
+      const fileName = `logs_${now.format('DD-MMMM-YYYY').toLowerCase()}.log`;
+      await fsPromises.appendFile(
+        path.join(__dirname, '..', '..', 'logs', fileName),
+        formattedEntry,
+      );
+    } catch (e) {
+      if (e instanceof Error) console.error(e.message);
+    }
   }
 
-  /**
-   * Write an 'error' level log.
-   */
-  error(message: any, ...optionalParams: any[]) {
-    this.logger.error(message, ...optionalParams);
+  public log(message: any, context?: string) {
+    context = context || this.options.serviceName;
+    const entry = `${context}\t${message}`;
+    this.logToFile(entry);
+    super.log(message, context);
+    this.rollbarLogger.log(message, context);
   }
 
-  /**
-   * Write a 'warn' level log.
-   */
-  warn(message: any, ...optionalParams: any[]) {
-    this.logger.warn(message, ...optionalParams);
-  }
-
-  /**
-   * Write a 'debug' level log.
-   */
-  debug?(message: any, ...optionalParams: any[]) {
-    this.logger.debug(message, ...optionalParams);
-  }
-
-  /**
-   * Write a 'verbose' level log.
-   */
-  verbose?(message: any, ...optionalParams: any[]) {
-    this.logger.verbose(message, ...optionalParams);
+  public error(message: any, stackOrContext?: string) {
+    stackOrContext = stackOrContext || this.options.serviceName;
+    const entry = `${stackOrContext}\t${message}`;
+    this.logToFile(entry);
+    super.error(message, stackOrContext);
+    this.rollbarLogger.error(message, stackOrContext);
   }
 }
