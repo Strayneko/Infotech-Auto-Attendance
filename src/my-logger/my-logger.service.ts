@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConsoleLogger } from '@nestjs/common';
+import { Inject, Injectable, ConsoleLogger, Logger } from '@nestjs/common';
 import { RollbarLogger } from 'nestjs-rollbar';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
@@ -7,11 +7,13 @@ import * as moment from 'moment';
 
 @Injectable()
 export class MyLoggerService extends ConsoleLogger {
+  protected logger: Logger;
   public constructor(
     @Inject('LOGGER_OPTIONS') protected options: Record<string, any>,
     private readonly rollbarLogger: RollbarLogger,
   ) {
     super();
+    this.logger = new Logger(this.options.serviceName);
   }
 
   protected async logToFile(entry) {
@@ -41,6 +43,7 @@ export class MyLoggerService extends ConsoleLogger {
     const entry = `${context}\t${message}`;
     this.logToFile(entry);
     super.log(message, context);
+    this.logger.log(message, context);
     this.rollbarLogger.log(message, context);
   }
 
@@ -49,6 +52,7 @@ export class MyLoggerService extends ConsoleLogger {
     const entry = `${stackOrContext}\t${message}`;
     this.logToFile(entry);
     super.error(message, stackOrContext);
+    this.logger.log(message, stackOrContext);
     this.rollbarLogger.error(message, stackOrContext);
   }
 }
