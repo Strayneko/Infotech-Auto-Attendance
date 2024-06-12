@@ -21,7 +21,9 @@ export class EmailService {
       });
       this.logger.log(`Mail has been sent to ${data.recipient}.`);
     } catch (e) {
-      this.logger.error(e.message);
+      const message = `Failed to send email to ${data.recipient}. Reason: ${e.message}`;
+      this.logger.error(message);
+      throw new Error(message);
     }
   }
 }
