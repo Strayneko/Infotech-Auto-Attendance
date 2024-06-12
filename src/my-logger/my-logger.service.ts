@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, ConsoleLogger } from '@nestjs/common';
+import { Inject, Injectable, ConsoleLogger } from '@nestjs/common';
 import { RollbarLogger } from 'nestjs-rollbar';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
